@@ -1,9 +1,7 @@
 package com.example.ostory.presentation.detail
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Movie
 import androidx.compose.material3.*
@@ -23,6 +21,8 @@ import coil.compose.AsyncImage
 import com.example.ostory.domain.model.Work
 import com.example.ostory.domain.model.WorkType
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 
 @Composable
 fun WorkDetailScreen(
@@ -170,6 +170,36 @@ fun WorkDetailContent(
             )
 
             Spacer(modifier = Modifier.height(16.dp))
+
+            if (work.genres.isNotEmpty()) {
+                Text(
+                    text = "장르",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                LazyRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    items(work.genres) { genre ->
+                        Surface(
+                            shape = RoundedCornerShape(50),
+                            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
+                            contentColor = MaterialTheme.colorScheme.primary
+                        ) {
+                            Text(
+                                text = genre.name,
+                                style = MaterialTheme.typography.bodySmall,
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                            )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+            }
 
             Text(
                 text = "평점 ${String.format("%.1f", work.rating)}",
