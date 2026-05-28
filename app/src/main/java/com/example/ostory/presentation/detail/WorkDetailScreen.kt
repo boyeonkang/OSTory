@@ -22,6 +22,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.example.ostory.domain.model.Work
 import com.example.ostory.domain.model.WorkType
+import androidx.compose.foundation.lazy.LazyColumn
 
 @Composable
 fun WorkDetailScreen(
@@ -40,18 +41,25 @@ fun WorkDetailScreen(
     }
 
     Scaffold { paddingValues ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues),
-            contentAlignment = Alignment.Center
-        ) {
-            when {
-                isLoading -> {
+        when {
+            isLoading -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues),
+                    contentAlignment = Alignment.Center
+                ) {
                     CircularProgressIndicator()
                 }
+            }
 
-                errorMessage != null -> {
+            errorMessage != null -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues),
+                    contentAlignment = Alignment.Center
+                ) {
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
@@ -65,15 +73,16 @@ fun WorkDetailScreen(
                         }
                     }
                 }
+            }
 
-                work != null -> {
-                    WorkDetailContent(
-                        work = work!!,
-                        workType = workType,
-                        onNavigateToReviewWrite = onNavigateToReviewWrite,
-                        onNavigateBack = onNavigateBack
-                    )
-                }
+            work != null -> {
+                WorkDetailContent(
+                    work = work!!,
+                    workType = workType,
+                    onNavigateToReviewWrite = onNavigateToReviewWrite,
+                    onNavigateBack = onNavigateBack,
+                    modifier = Modifier.padding(paddingValues)
+                )
             }
         }
     }
@@ -84,88 +93,115 @@ fun WorkDetailContent(
     work: Work,
     workType: String,
     onNavigateToReviewWrite: (Int, String) -> Unit,
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
-    Column(
-        modifier = Modifier
+    LazyColumn(
+        modifier = modifier
             .fillMaxSize()
-            .verticalScroll(rememberScrollState())
             .padding(16.dp)
     ) {
-        OutlinedButton(onClick = onNavigateBack) {
-            Text("뒤로 가기")
-        }
+        item {
+            OutlinedButton(onClick = onNavigateBack) {
+                Text("뒤로 가기")
+            }
 
-        Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
-        if (work.posterPath != null) {
-            AsyncImage(
-                model = work.posterPath,
-                contentDescription = work.titleKo,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(420.dp)
-                    .clip(RoundedCornerShape(16.dp)),
-                contentScale = ContentScale.Crop
-            )
-        } else {
-            Surface(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(420.dp)
-                    .clip(RoundedCornerShape(16.dp)),
-                color = Color(0xFFE0E0E0)
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(
-                        imageVector = Icons.Default.Movie,
-                        contentDescription = "포스터 없음",
-                        modifier = Modifier.size(64.dp),
-                        tint = Color.Gray
-                    )
+            if (work.posterPath != null) {
+                AsyncImage(
+                    model = work.posterPath,
+                    contentDescription = work.titleKo,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(320.dp)
+                        .clip(RoundedCornerShape(16.dp)),
+                    contentScale = ContentScale.Fit
+                )
+            } else {
+                Surface(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(320.dp)
+                        .clip(RoundedCornerShape(16.dp)),
+                    color = Color(0xFFE0E0E0)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            imageVector = Icons.Default.Movie,
+                            contentDescription = "포스터 없음",
+                            modifier = Modifier.size(64.dp),
+                            tint = Color.Gray
+                        )
+                    }
                 }
             }
-        }
 
-        Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
-        Text(
-            text = work.titleKo,
-            style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.Bold
-        )
+            Text(
+                text = work.titleKo,
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold
+            )
 
-        Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
-        Text(
-            text = work.titleEn,
-            style = MaterialTheme.typography.titleMedium,
-            color = Color.DarkGray
-        )
+            Text(
+                text = work.titleEn,
+                style = MaterialTheme.typography.titleMedium,
+                color = Color.DarkGray
+            )
 
-        Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
-        Text(
-            text = if (work.type == WorkType.MOVIE) "영화" else "드라마",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.primary,
-            fontWeight = FontWeight.Bold
-        )
+            Text(
+                text = if (work.type == WorkType.MOVIE) "영화" else "드라마",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.primary,
+                fontWeight = FontWeight.Bold
+            )
 
-        Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
-        Text(
-            text = if (work.year > 0) "${work.year}년" else "연도 정보 없음",
-            style = MaterialTheme.typography.bodyMedium
-        )
+            Text(
+                text = if (work.year > 0) "${work.year}년" else "연도 정보 없음",
+                style = MaterialTheme.typography.bodyMedium
+            )
 
-        Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
-        Button(
-            onClick = { onNavigateToReviewWrite(work.id, workType) },
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("감상 기록 남기기")
+            Text(
+                text = "평점 ${String.format("%.1f", work.rating)}",
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Bold
+            )
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Text(
+                text = "줄거리",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text(
+                text = work.plot.ifBlank { "줄거리 정보가 없습니다." },
+                style = MaterialTheme.typography.bodyMedium
+            )
+
+            Spacer(modifier = Modifier.height(32.dp))
+
+            Button(
+                onClick = { onNavigateToReviewWrite(work.id, workType) },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("감상 기록 남기기")
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
         }
     }
 }
