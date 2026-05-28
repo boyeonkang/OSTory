@@ -55,6 +55,27 @@ fun String?.extractYear(): Int {
     }
 }
 
+fun TmdbSearchResultDto.toWorkOrNull(): Work? {
+    val workType = when (this.mediaType) {
+        "movie" -> WorkType.MOVIE
+        "tv" -> WorkType.DRAMA
+        else -> return null
+    }
+
+    return Work(
+        id = this.id,
+        titleKo = if (workType == WorkType.MOVIE) (this.title ?: "") else (this.name ?: ""),
+        titleEn = if (workType == WorkType.MOVIE) (this.originalTitle ?: "") else (this.originalName ?: ""),
+        type = workType,
+        year = if (workType == WorkType.MOVIE) this.releaseDate.extractYear() else this.firstAirDate.extractYear(),
+        posterPath = this.posterPath.toPosterUrl(),
+        genres = this.genreIds?.map { it.toGenre() } ?: emptyList(),
+        plot = this.overview ?: "",
+        rating = this.voteAverage ?: 0.0,
+        ostList = emptyList()
+    )
+}
+
 fun TmdbMovieDto.toWork(): Work {
     return Work(
         id = this.id,

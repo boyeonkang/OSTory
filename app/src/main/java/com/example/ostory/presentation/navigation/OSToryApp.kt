@@ -1,7 +1,10 @@
 package com.example.ostory.presentation.navigation
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.ui.graphics.Color
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Search
@@ -23,7 +26,9 @@ import com.example.ostory.presentation.detail.WorkDetailScreen
 import com.example.ostory.presentation.preference.PreferenceScreen
 import com.example.ostory.presentation.review.ReviewDetailScreen
 import com.example.ostory.presentation.review.ReviewWriteScreen
-import com.example.ostory.presentation.search.SearchScreen
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.ostory.presentation.search.SearchScreenRoute
+import com.example.ostory.presentation.search.SearchViewModel
 
 sealed class Screen(val route: String, val title: String, val icon: ImageVector? = null) {
     object Calendar : Screen("calendar", "캘린더", Icons.Default.CalendarMonth)
@@ -46,7 +51,12 @@ fun OSToryApp() {
     val navController = rememberNavController()
     val tabItems = listOf(Screen.Calendar, Screen.Search, Screen.Preference)
 
-    Scaffold(
+    Surface(
+        modifier = Modifier.fillMaxSize(),
+        color = Color.White
+    ) {
+        Scaffold(
+            containerColor = Color.White,
         bottomBar = {
             val navBackStackEntry by navController.currentBackStackEntryAsState()
             val currentDestination = navBackStackEntry?.destination
@@ -76,8 +86,11 @@ fun OSToryApp() {
     ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = Screen.Calendar.route,
-            modifier = Modifier.padding(innerPadding)
+            startDestination = Screen.Search.route,
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.White)
+                .padding(innerPadding)
         ) {
             composable(Screen.Calendar.route) {
                 CalendarScreen(
@@ -90,10 +103,21 @@ fun OSToryApp() {
                 )
             }
             composable(Screen.Search.route) {
-                SearchScreen(
+                val searchViewModel: SearchViewModel = viewModel()
+                SearchScreenRoute(
                     onNavigateToDetail = { workId, type ->
                         navController.navigate(Screen.WorkDetail.createRoute(workId, type))
-                    }
+                    },
+                    onCloseClick = {
+                        navController.navigate(Screen.Calendar.route) {
+                            popUpTo(navController.graph.findStartDestination().id) {
+                                saveState = true
+                            }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    },
+                    viewModel = searchViewModel
                 )
             }
             composable(
@@ -149,6 +173,7 @@ fun OSToryApp() {
             }
             composable(Screen.Preference.route) {
                 PreferenceScreen()
+            }
             }
         }
     }

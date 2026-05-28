@@ -2,6 +2,25 @@ package com.example.ostory.data.remote.tmdb
 
 import com.google.gson.annotations.SerializedName
 
+data class TmdbMultiSearchResponse(
+    @SerializedName("results") val results: List<TmdbSearchResultDto>
+)
+
+data class TmdbSearchResultDto(
+    @SerializedName("id") val id: Int,
+    @SerializedName("media_type") val mediaType: String, // "movie", "tv", "person"
+    @SerializedName("title") val title: String?, // movie
+    @SerializedName("name") val name: String?, // tv
+    @SerializedName("original_title") val originalTitle: String?, // movie
+    @SerializedName("original_name") val originalName: String?, // tv
+    @SerializedName("release_date") val releaseDate: String?, // movie
+    @SerializedName("first_air_date") val firstAirDate: String?, // tv
+    @SerializedName("poster_path") val posterPath: String?,
+    @SerializedName("overview") val overview: String?,
+    @SerializedName("vote_average") val voteAverage: Double?,
+    @SerializedName("genre_ids") val genreIds: List<Int>?
+)
+
 data class TmdbMovieSearchResponse(
     @SerializedName("results") val results: List<TmdbMovieDto>
 )
