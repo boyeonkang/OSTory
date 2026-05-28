@@ -4,10 +4,13 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.ostory.data.repository.WorkRepository
 import com.example.ostory.domain.model.Work
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class SearchViewModel(
     private val repository: WorkRepository = WorkRepository()
@@ -28,22 +31,32 @@ class SearchViewModel(
     private val _hasSearched = MutableStateFlow(false)
     val hasSearched: StateFlow<Boolean> = _hasSearched.asStateFlow()
 
+    private var searchJob: Job? = null
+
     fun onQueryChange(newQuery: String) {
         _query.value = newQuery
     }
 
     fun search() {
         val currentQuery = _query.value.trim()
+
         if (currentQuery.isEmpty()) {
             return
         }
 
-        viewModelScope.launch {
+        // 이전 검색이 아직 진행 중이면 취소
+        searchJob?.cancel()
+
+        searchJob = viewModelScope.launch {
             _isLoading.value = true
             _errorMessage.value = null
             _hasSearched.value = true
+
             try {
-                val searchResults = repository.searchWorks(currentQuery)
+                val searchResults = withContext(Dispatchers.IO) {
+                    repository.searchWorks(currentQuery)
+                }
+
                 _results.value = searchResults
             } catch (e: Exception) {
                 _results.value = emptyList()
@@ -55,6 +68,8 @@ class SearchViewModel(
     }
 
     fun clearSearch() {
+        searchJob?.cancel()
+
         _query.value = ""
         _results.value = emptyList()
         _isLoading.value = false
