@@ -44,6 +44,7 @@ sealed class Screen(val route: String, val title: String, val icon: ImageVector?
     object ReviewDetail : Screen("reviewDetail/{recordId}", "감상 기록 상세") {
         fun createRoute(recordId: Int) = "reviewDetail/$recordId"
     }
+    object ReviewSaved : Screen("reviewSaved", "저장 완료")
 }
 
 @Composable
@@ -152,8 +153,22 @@ fun OSToryApp() {
                 ReviewWriteScreen(
                     workId = workId,
                     workType = type,
+                    onNavigateToReviewSaved = {
+                        navController.navigate(Screen.ReviewSaved.route) {
+                            popUpTo(Screen.ReviewWrite.route) { inclusive = true }
+                        }
+                    },
                     onNavigateBack = {
                         navController.popBackStack()
+                    }
+                )
+            }
+            composable(Screen.ReviewSaved.route) {
+                com.example.ostory.presentation.review.ReviewSavedScreen(
+                    onNavigateBackToCalendar = {
+                        navController.navigate(Screen.Calendar.route) {
+                            popUpTo(Screen.Calendar.route) { inclusive = false }
+                        }
                     }
                 )
             }
