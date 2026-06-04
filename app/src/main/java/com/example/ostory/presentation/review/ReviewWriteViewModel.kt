@@ -5,6 +5,8 @@ import androidx.lifecycle.viewModelScope
 import com.example.ostory.data.repository.WorkRepository
 import com.example.ostory.domain.model.Work
 import com.example.ostory.domain.model.WorkType
+import com.example.ostory.data.repository.ReviewRepository
+import com.example.ostory.domain.model.ReviewRecord
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -12,6 +14,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import java.time.LocalDate
 
 class ReviewWriteViewModel(
     private val repository: WorkRepository = WorkRepository()
@@ -82,5 +85,26 @@ class ReviewWriteViewModel(
         if (value.length <= 100) {
             _reviewText.value = value
         }
+    }
+
+    fun saveReviewRecord(): Boolean {
+        val currentWork = _work.value ?: return false
+        val ratingVal = _rating.value
+        val commentVal = _reviewText.value
+        if (ratingVal !in 1..5 || commentVal.trim().isEmpty()) return false
+
+        val record = ReviewRecord(
+            id = 0,
+            workId = currentWork.id,
+            workType = currentWork.type,
+            watchedDate = LocalDate.now().toString(), // "yyyy-MM-dd"
+            rating = ratingVal,
+            comment = commentVal,
+            posterPath = currentWork.posterPath,
+            titleKo = currentWork.titleKo,
+            titleEn = currentWork.titleEn
+        )
+        ReviewRepository.getInstance().addRecord(record)
+        return true
     }
 }

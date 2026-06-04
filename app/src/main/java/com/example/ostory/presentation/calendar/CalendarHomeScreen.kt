@@ -22,6 +22,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import com.example.ostory.data.repository.ReviewRepository
 import com.example.ostory.domain.model.ReviewRecord
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -29,12 +30,14 @@ import java.util.Locale
 
 @Composable
 fun CalendarHomeScreen(
-    reviews: List<ReviewRecord> = emptyList(),
-    workPosters: Map<Int, String?> = emptyMap(),
     onNavigateToSearch: () -> Unit,
-    onNavigateToReviewDetail: (Int) -> Unit
+    onNavigateToReviewDetail: (Int) -> Unit,
+    reviewRepository: ReviewRepository = ReviewRepository.getInstance()
 ) {
     var currentMonth by remember { mutableStateOf(LocalDate.now()) }
+    val reviews by reviewRepository.recordsFlow.collectAsState(
+        initial = reviewRepository.getRecords()
+    )
 
     Column(
         modifier = Modifier
@@ -139,8 +142,9 @@ fun CalendarHomeScreen(
                 val date = currentMonth.withDayOfMonth(day)
                 val dateString = String.format(Locale.US, "%04d-%02d-%02d", date.year, date.monthValue, date.dayOfMonth)
 
+                // 이 날짜의 감상 기록 찾기
                 val reviewForDay = reviews.find { it.watchedDate == dateString }
-                val posterUrl = reviewForDay?.let { workPosters[it.workId] }
+                val posterUrl = reviewForDay?.posterPath
 
                 val today = LocalDate.now()
                 val isToday = date.isEqual(today)

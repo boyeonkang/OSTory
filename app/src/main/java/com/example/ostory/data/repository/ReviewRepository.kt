@@ -1,11 +1,17 @@
 package com.example.ostory.data.repository
 
 import com.example.ostory.domain.model.ReviewRecord
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import java.util.concurrent.atomic.AtomicInteger
 
 class ReviewRepository private constructor() {
     private val records = mutableListOf<ReviewRecord>()
     private val idCounter = AtomicInteger(1)
+
+    private val _recordsFlow = MutableStateFlow<List<ReviewRecord>>(emptyList())
+    val recordsFlow: StateFlow<List<ReviewRecord>> = _recordsFlow.asStateFlow()
 
     companion object {
         @Volatile
@@ -34,9 +40,11 @@ class ReviewRepository private constructor() {
             record
         }
         records.add(finalRecord)
+        _recordsFlow.value = records.toList()
     }
 
     fun deleteRecord(recordId: Int) {
         records.removeAll { it.id == recordId }
+        _recordsFlow.value = records.toList()
     }
 }

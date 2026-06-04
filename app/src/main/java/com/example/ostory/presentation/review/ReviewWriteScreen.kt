@@ -89,7 +89,10 @@ fun ReviewWriteScreen(
                 Button(
                     onClick = {
                         if (isSaveEnabled) {
-                            onNavigateToReviewSaved()
+                            val success = viewModel.saveReviewRecord()
+                            if (success) {
+                                onNavigateToReviewSaved()
+                            }
                         }
                     },
                     enabled = isSaveEnabled,
