@@ -35,7 +35,9 @@ fun CalendarHomeScreen(
     reviewRepository: ReviewRepository = ReviewRepository.getInstance()
 ) {
     var currentMonth by remember { mutableStateOf(LocalDate.now()) }
-    val reviews by reviewRepository.recordsFlow.collectAsState(initial = reviewRepository.getRecords())
+    val reviews by reviewRepository.recordsFlow.collectAsState(
+        initial = reviewRepository.getRecords()
+    )
 
     Column(
         modifier = Modifier
