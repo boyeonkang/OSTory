@@ -174,6 +174,37 @@ fun PreferenceScreen(
                 }
             }
 
+            // 음악 취향 섹션
+            Text(
+                text = "음악 취향",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = Color.Black,
+                modifier = Modifier.padding(bottom = 12.dp)
+            )
+
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 32.dp),
+                color = Color(0xFFF2F2F7),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(24.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "OST 기반 음악 취향 분석은 다음 단계에서 제공됩니다.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color(0xFF9E9E9E),
+                        textAlign = TextAlign.Center
+                    )
+                }
+            }
+
             // AI 추천 작품 섹션
             Text(
                 text = "AI 추천 작품",
