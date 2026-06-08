@@ -87,7 +87,7 @@ class ReviewWriteViewModel(
         }
     }
 
-    fun saveReviewRecord(): Boolean {
+    fun saveReviewRecord(selectedDate: String? = null): Boolean {
         val currentWork = _work.value ?: return false
         val ratingVal = _rating.value
         val commentVal = _reviewText.value
@@ -97,7 +97,7 @@ class ReviewWriteViewModel(
             id = 0,
             workId = currentWork.id,
             workType = currentWork.type,
-            watchedDate = LocalDate.now().toString(), // "yyyy-MM-dd"
+            watchedDate = selectedDate ?: LocalDate.now().toString(), // "yyyy-MM-dd"
             rating = ratingVal,
             comment = commentVal,
             posterPath = currentWork.posterPath,

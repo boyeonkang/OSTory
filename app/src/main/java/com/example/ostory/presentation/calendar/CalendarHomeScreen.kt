@@ -30,7 +30,7 @@ import java.util.Locale
 
 @Composable
 fun CalendarHomeScreen(
-    onNavigateToSearch: () -> Unit,
+    onNavigateToSearch: (String) -> Unit,
     onNavigateToReviewDetail: (Int) -> Unit,
     reviewRepository: ReviewRepository = ReviewRepository.getInstance()
 ) {
@@ -149,10 +149,17 @@ fun CalendarHomeScreen(
                 val today = LocalDate.now()
                 val isToday = date.isEqual(today)
 
+                val clickableModifier = if (reviewForDay != null && !posterUrl.isNullOrEmpty()) {
+                    Modifier.clickable { onNavigateToReviewDetail(reviewForDay.id) }
+                } else {
+                    Modifier.clickable { onNavigateToSearch(dateString) }
+                }
+
                 Box(
                     modifier = Modifier
                         .aspectRatio(0.7f)
-                        .fillMaxSize(),
+                        .fillMaxSize()
+                        .then(clickableModifier),
                     contentAlignment = Alignment.Center
                 ) {
                     if (reviewForDay != null && !posterUrl.isNullOrEmpty()) {
@@ -161,8 +168,7 @@ fun CalendarHomeScreen(
                             contentDescription = "감상 기록 포스터",
                             modifier = Modifier
                                 .fillMaxSize()
-                                .clip(RoundedCornerShape(8.dp))
-                                .clickable { onNavigateToReviewDetail(reviewForDay.id) },
+                                .clip(RoundedCornerShape(8.dp)),
                             contentScale = ContentScale.Crop
                         )
                     } else {
