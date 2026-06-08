@@ -199,11 +199,13 @@ fun OSToryApp() {
                 )
             ) { backStackEntry ->
                 val recordId = backStackEntry.arguments?.getInt("recordId") ?: 0
+                val reviewDetailViewModel: com.example.ostory.presentation.review.ReviewDetailViewModel = viewModel()
                 ReviewDetailScreen(
                     recordId = recordId,
                     onNavigateBack = {
                         navController.popBackStack()
-                    }
+                    },
+                    viewModel = reviewDetailViewModel
                 )
             }
             composable(Screen.Preference.route) {

@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Movie
+import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -20,9 +21,15 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.example.ostory.domain.model.Work
 import com.example.ostory.domain.model.WorkType
+import com.example.ostory.domain.model.OstTrack
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.ui.platform.LocalContext
+import android.content.Intent
+import android.net.Uri
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.style.TextAlign
 
 @Composable
 fun WorkDetailScreen(
@@ -36,6 +43,9 @@ fun WorkDetailScreen(
     val work by viewModel.work.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val errorMessage by viewModel.errorMessage.collectAsState()
+    val ostList by viewModel.ostList.collectAsState()
+    val isOstLoading by viewModel.isOstLoading.collectAsState()
+    val isOstLoaded by viewModel.isOstLoaded.collectAsState()
 
     LaunchedEffect(workId, workType) {
         viewModel.loadWorkDetail(workId, workType)
@@ -81,6 +91,10 @@ fun WorkDetailScreen(
                     work = work!!,
                     workType = workType,
                     selectedDate = selectedDate,
+                    ostList = ostList,
+                    isOstLoading = isOstLoading,
+                    isOstLoaded = isOstLoaded,
+                    onFetchOstClick = { viewModel.fetchOst() },
                     onNavigateToReviewWrite = onNavigateToReviewWrite,
                     onNavigateBack = onNavigateBack,
                     modifier = Modifier.padding(paddingValues)
@@ -95,6 +109,10 @@ fun WorkDetailContent(
     work: Work,
     workType: String,
     selectedDate: String? = null,
+    ostList: List<OstTrack> = emptyList(),
+    isOstLoading: Boolean = false,
+    isOstLoaded: Boolean = false,
+    onFetchOstClick: () -> Unit = {},
     onNavigateToReviewWrite: (Int, String, String?) -> Unit,
     onNavigateBack: () -> Unit,
     modifier: Modifier = Modifier
@@ -227,6 +245,98 @@ fun WorkDetailContent(
 
             Spacer(modifier = Modifier.height(32.dp))
 
+            // OST 섹션 추가
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = Icons.Default.MusicNote,
+                    contentDescription = "OST",
+                    tint = Color(0xFF9C27B0),
+                    modifier = Modifier.size(24.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "OST",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.Black
+                )
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            if (isOstLoading) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 16.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        CircularProgressIndicator(
+                            color = Color(0xFF9C27B0),
+                            modifier = Modifier.size(20.dp),
+                            strokeWidth = 2.dp
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "OST 정보를 불러오는 중입니다...",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Color.Gray
+                        )
+                    }
+                }
+            } else if (!isOstLoaded) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = "OST 정보를 불러올 수 있습니다.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color.Gray,
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+                    Button(
+                        onClick = onFetchOstClick,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF9C27B0),
+                            contentColor = Color.White
+                        ),
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Text("OST 정보 불러오기")
+                    }
+                }
+            } else if (ostList.isEmpty()) {
+                Text(
+                    text = "등록된 OST 정보가 없습니다.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color.Gray,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 16.dp),
+                    textAlign = TextAlign.Center
+                )
+            } else {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    ostList.forEach { track ->
+                        OstTrackItem(track = track, workTitle = work.titleKo)
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(32.dp))
+
             Button(
                 onClick = { onNavigateToReviewWrite(work.id, workType, selectedDate) },
                 modifier = Modifier.fillMaxWidth()
@@ -235,6 +345,108 @@ fun WorkDetailContent(
             }
 
             Spacer(modifier = Modifier.height(24.dp))
+        }
+    }
+}
+
+@Composable
+fun OstTrackItem(
+    track: OstTrack,
+    workTitle: String
+) {
+    val context = LocalContext.current
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        color = Color(0xFFF2F2F7),
+        shape = RoundedCornerShape(12.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text(
+                        text = track.title.orEmpty(),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.Black,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Text(
+                        text = track.artist.orEmpty(),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color.DarkGray,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+                
+                Button(
+                    onClick = {
+                        val query = "${track.title.orEmpty()} ${track.artist.orEmpty()} $workTitle OST"
+                        val encodedQuery = Uri.encode(query)
+                        val url = "https://www.youtube.com/results?search_query=$encodedQuery"
+                        try {
+                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+                            context.startActivity(intent)
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFFFF0000),
+                        contentColor = Color.White
+                    ),
+                    shape = RoundedCornerShape(8.dp),
+                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
+                    modifier = Modifier.height(36.dp)
+                ) {
+                    Text(
+                        text = "YouTube에서 보기",
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+            
+            Spacer(modifier = Modifier.height(8.dp))
+            
+            HorizontalDivider(color = Color.LightGray.copy(alpha = 0.5f), thickness = 0.5.dp)
+            
+            Spacer(modifier = Modifier.height(8.dp))
+            
+            Text(
+                text = "앨범: ${track.album.orEmpty()}",
+                style = MaterialTheme.typography.bodySmall,
+                color = Color.Gray,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            val comp = track.composer.orEmpty().ifBlank { "알 수 없음" }
+            val lyr = track.lyricist.orEmpty().ifBlank { "알 수 없음" }
+            Text(
+                text = "작곡: $comp | 작사: $lyr",
+                style = MaterialTheme.typography.bodySmall,
+                color = Color.Gray,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            if (!track.originalArtist.isNullOrBlank()) {
+                Text(
+                    text = "원곡: ${track.originalArtist.orEmpty()}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color.Gray,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
         }
     }
 }

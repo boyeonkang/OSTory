@@ -38,10 +38,17 @@ class SearchViewModel(
     }
 
     fun search() {
-        val currentQuery = _query.value.trim()
+        val rawQuery = _query.value.trim()
 
-        if (currentQuery.isEmpty()) {
+        if (rawQuery.isEmpty()) {
             return
+        }
+
+        val lowercaseQuery = rawQuery.lowercase()
+        val currentQuery = if (lowercaseQuery == "lalaland" || lowercaseQuery == "la la land") {
+            "La La Land"
+        } else {
+            rawQuery
         }
 
         // 이전 검색이 아직 진행 중이면 취소
@@ -57,7 +64,8 @@ class SearchViewModel(
                     repository.searchWorks(currentQuery)
                 }
 
-                _results.value = searchResults
+                val uniqueResults = searchResults.distinctBy { "${it.id}_${it.type}" }
+                _results.value = uniqueResults
             } catch (e: Exception) {
                 _results.value = emptyList()
                 _errorMessage.value = "검색 중 오류가 발생했습니다."

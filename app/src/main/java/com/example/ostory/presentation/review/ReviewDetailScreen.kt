@@ -26,6 +26,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.example.ostory.data.repository.ReviewRepository
+import com.example.ostory.domain.model.Work
+import com.example.ostory.domain.model.OstTrack
+import com.example.ostory.presentation.detail.OstTrackItem
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
@@ -35,11 +38,17 @@ import java.util.Locale
 fun ReviewDetailScreen(
     recordId: Int,
     onNavigateBack: () -> Unit,
-    reviewRepository: ReviewRepository = ReviewRepository.getInstance()
+    viewModel: ReviewDetailViewModel
 ) {
-    val record = remember(recordId) {
-        reviewRepository.getRecordById(recordId)
+    LaunchedEffect(recordId) {
+        viewModel.loadReviewRecord(recordId)
     }
+
+    val recordState by viewModel.record.collectAsState()
+    val record = recordState
+    val ostList by viewModel.ostList.collectAsState()
+    val isOstLoading by viewModel.isOstLoading.collectAsState()
+    val isOstLoaded by viewModel.isOstLoaded.collectAsState()
 
     var showDeleteDialog by remember { mutableStateOf(false) }
 
@@ -117,7 +126,7 @@ fun ReviewDetailScreen(
                 TextButton(
                     onClick = {
                         showDeleteDialog = false
-                        reviewRepository.deleteRecord(recordId)
+                        ReviewRepository.getInstance().deleteRecord(recordId)
                         onNavigateBack()
                     }
                 ) {
@@ -330,16 +339,74 @@ fun ReviewDetailScreen(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // 실제 OST 데이터가 없으므로 문구 표시
-            Text(
-                text = "등록된 OST 정보가 없습니다.",
-                style = MaterialTheme.typography.bodyMedium,
-                color = Color(0xFF9E9E9E),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 16.dp),
-                textAlign = TextAlign.Center
-            )
+            if (isOstLoading) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 16.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        CircularProgressIndicator(
+                            color = Color(0xFF9C27B0),
+                            modifier = Modifier.size(20.dp),
+                            strokeWidth = 2.dp
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "OST 정보를 불러오는 중입니다...",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Color.Gray
+                        )
+                    }
+                }
+            } else if (!isOstLoaded) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = "OST 정보를 불러올 수 있습니다.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color.Gray,
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+                    Button(
+                        onClick = { viewModel.fetchOst() },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF9C27B0),
+                            contentColor = Color.White
+                        ),
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Text("OST 정보 불러오기")
+                    }
+                }
+            } else if (ostList.isEmpty()) {
+                Text(
+                    text = "등록된 OST 정보가 없습니다.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color(0xFF9E9E9E),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 16.dp),
+                    textAlign = TextAlign.Center
+                )
+            } else {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    ostList.forEach { track ->
+                        OstTrackItem(track = track, workTitle = record?.titleKo ?: "")
+                    }
+                }
+            }
 
             Spacer(modifier = Modifier.height(24.dp))
         }
