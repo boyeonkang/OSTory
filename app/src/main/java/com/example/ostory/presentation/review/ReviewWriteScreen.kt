@@ -51,8 +51,12 @@ fun ReviewWriteScreen(
         viewModel.loadWorkDetail(workId, workType)
     }
 
-    val date = if (!selectedDate.isNullOrEmpty()) {
-        LocalDate.parse(selectedDate, DateTimeFormatter.ofPattern("yyyy-MM-dd"))
+    val date = if (!selectedDate.isNullOrBlank() && selectedDate != "{selectedDate}") {
+        try {
+            LocalDate.parse(selectedDate, DateTimeFormatter.ofPattern("yyyy-MM-dd"))
+        } catch (e: Exception) {
+            LocalDate.now()
+        }
     } else {
         LocalDate.now()
     }
@@ -94,7 +98,17 @@ fun ReviewWriteScreen(
                 Button(
                     onClick = {
                         if (isSaveEnabled) {
-                            val success = viewModel.saveReviewRecord(selectedDate)
+                            val safeSelectedDate = if (!selectedDate.isNullOrBlank() && selectedDate != "{selectedDate}") {
+                                try {
+                                    LocalDate.parse(selectedDate, DateTimeFormatter.ofPattern("yyyy-MM-dd"))
+                                    selectedDate
+                                } catch (e: Exception) {
+                                    null
+                                }
+                            } else {
+                                null
+                            }
+                            val success = viewModel.saveReviewRecord(safeSelectedDate)
                             if (success) {
                                 onNavigateToReviewSaved()
                             }

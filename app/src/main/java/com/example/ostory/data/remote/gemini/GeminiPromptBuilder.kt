@@ -101,4 +101,49 @@ object GeminiPromptBuilder {
             }
         """.trimIndent()
     }
+
+    fun buildPreferenceAnalysisPrompt(records: List<ReviewRecord>): String {
+        val recordsText = records.joinToString(separator = "\n") { record ->
+            val typeText = if (record.workType == WorkType.MOVIE) "영화" else "드라마"
+            "- 작품 제목: ${record.titleKo ?: "알 수 없음"} (원제: ${record.titleEn ?: "알 수 없음"}), 구분: ${typeText}, 감상 날짜: ${record.watchedDate}, 별점: ${record.rating}/5점, 한줄평: ${record.comment}"
+        }
+
+        return """
+            사용자의 작품 감상 기록 리스트:
+            $recordsText
+            
+            위 감상 기록과 해당 작품들의 일반적인 장르 및 OST 음악 특징을 바탕으로 사용자의 영화/드라마 취향을 분석해줘.
+            특히 사용자가 기록한 한줄평과 별점, 그리고 해당 작품들의 음악적 스타일(OST)을 종합적으로 고려하여 아래 JSON 형식으로만 응답을 생성해줘.
+            마크다운 코드 블록(```json ```)을 포함한 어떠한 부가 설명 텍스트도 절대 포함하지 말고 순수 JSON 문자열만 반환해줘.
+            
+            출력 개수 제한:
+            - 선호 장르/키워드: 최대 3개
+            - 음악 취향 키워드: 최대 3개
+            - 추천 작품: 최대 3개
+            - reason(이유/근거)은 자연스럽고 간결하게 1~2줄 정도로만 작성해줘.
+            
+            JSON 응답 형식:
+            {
+              "preferredGenres": [
+                {
+                  "name": "장르 또는 취향 키워드",
+                  "reason": "근거"
+                }
+              ],
+              "musicKeywords": [
+                {
+                  "keyword": "음악 취향 키워드",
+                  "reason": "근거"
+                }
+              ],
+              "recommendations": [
+                {
+                  "title": "추천 작품명",
+                  "reason": "추천 이유"
+                }
+              ],
+              "summary": "전체 취향 요약"
+            }
+        """.trimIndent()
+    }
 }
