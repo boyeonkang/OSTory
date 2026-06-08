@@ -32,14 +32,19 @@ import com.example.ostory.presentation.search.SearchViewModel
 
 sealed class Screen(val route: String, val title: String, val icon: ImageVector? = null) {
     object Calendar : Screen("calendar", "캘린더", Icons.Default.CalendarMonth)
-    object Search : Screen("search", "검색", Icons.Default.Search)
+    object Search : Screen("search?selectedDate={selectedDate}", "검색", Icons.Default.Search) {
+        fun createRoute(selectedDate: String? = null) = 
+            if (selectedDate != null) "search?selectedDate=$selectedDate" else "search"
+    }
     object Preference : Screen("preference", "취향", Icons.Default.Favorite)
     
-    object WorkDetail : Screen("detail/{workId}/{type}", "작품 상세") {
-        fun createRoute(workId: Int, type: String) = "detail/$workId/$type"
+    object WorkDetail : Screen("detail/{workId}/{type}?selectedDate={selectedDate}", "작품 상세") {
+        fun createRoute(workId: Int, type: String, selectedDate: String? = null) = 
+            if (selectedDate != null) "detail/$workId/$type?selectedDate=$selectedDate" else "detail/$workId/$type"
     }
-    object ReviewWrite : Screen("reviewWrite/{workId}/{type}", "감상 기록 작성") {
-        fun createRoute(workId: Int, type: String) = "reviewWrite/$workId/$type"
+    object ReviewWrite : Screen("reviewWrite/{workId}/{type}?selectedDate={selectedDate}", "감상 기록 작성") {
+        fun createRoute(workId: Int, type: String, selectedDate: String? = null) = 
+            if (selectedDate != null) "reviewWrite/$workId/$type?selectedDate=$selectedDate" else "reviewWrite/$workId/$type"
     }
     object ReviewDetail : Screen("reviewDetail/{recordId}", "감상 기록 상세") {
         fun createRoute(recordId: Int) = "reviewDetail/$recordId"
@@ -95,19 +100,30 @@ fun OSToryApp() {
         ) {
             composable(Screen.Calendar.route) {
                 CalendarHomeScreen(
-                    onNavigateToSearch = {
-                        navController.navigate(Screen.Search.route)
+                    onNavigateToSearch = { selectedDate ->
+                        navController.navigate(Screen.Search.createRoute(selectedDate))
                     },
                     onNavigateToReviewDetail = { recordId ->
                         navController.navigate(Screen.ReviewDetail.createRoute(recordId))
                     }
                 )
             }
-            composable(Screen.Search.route) {
+            composable(
+                route = Screen.Search.route,
+                arguments = listOf(
+                    navArgument("selectedDate") {
+                        type = NavType.StringType
+                        nullable = true
+                        defaultValue = null
+                    }
+                )
+            ) { backStackEntry ->
+                val selectedDate = backStackEntry.arguments?.getString("selectedDate")
                 val searchViewModel: SearchViewModel = viewModel()
                 SearchScreenRoute(
-                    onNavigateToDetail = { workId, type ->
-                        navController.navigate(Screen.WorkDetail.createRoute(workId, type))
+                    selectedDate = selectedDate,
+                    onNavigateToDetail = { workId, type, date ->
+                        navController.navigate(Screen.WorkDetail.createRoute(workId, type, date))
                     },
                     onCloseClick = {
                         navController.navigate(Screen.Calendar.route) {
@@ -125,16 +141,23 @@ fun OSToryApp() {
                 route = Screen.WorkDetail.route,
                 arguments = listOf(
                     navArgument("workId") { type = NavType.IntType },
-                    navArgument("type") { type = NavType.StringType }
+                    navArgument("type") { type = NavType.StringType },
+                    navArgument("selectedDate") {
+                        type = NavType.StringType
+                        nullable = true
+                        defaultValue = null
+                    }
                 )
             ) { backStackEntry ->
                 val workId = backStackEntry.arguments?.getInt("workId") ?: 0
                 val type = backStackEntry.arguments?.getString("type") ?: "MOVIE"
+                val selectedDate = backStackEntry.arguments?.getString("selectedDate")
                 WorkDetailScreen(
                     workId = workId,
                     workType = type,
-                    onNavigateToReviewWrite = { id, wType ->
-                        navController.navigate(Screen.ReviewWrite.createRoute(id, wType))
+                    selectedDate = selectedDate,
+                    onNavigateToReviewWrite = { id, wType, date ->
+                        navController.navigate(Screen.ReviewWrite.createRoute(id, wType, date))
                     },
                     onNavigateBack = {
                         navController.popBackStack()
@@ -145,14 +168,21 @@ fun OSToryApp() {
                 route = Screen.ReviewWrite.route,
                 arguments = listOf(
                     navArgument("workId") { type = NavType.IntType },
-                    navArgument("type") { type = NavType.StringType }
+                    navArgument("type") { type = NavType.StringType },
+                    navArgument("selectedDate") {
+                        type = NavType.StringType
+                        nullable = true
+                        defaultValue = null
+                    }
                 )
             ) { backStackEntry ->
                 val workId = backStackEntry.arguments?.getInt("workId") ?: 0
                 val type = backStackEntry.arguments?.getString("type") ?: "MOVIE"
+                val selectedDate = backStackEntry.arguments?.getString("selectedDate")
                 ReviewWriteScreen(
                     workId = workId,
                     workType = type,
+                    selectedDate = selectedDate,
                     onNavigateToReviewSaved = {
                         navController.navigate(Screen.ReviewSaved.route) {
                             popUpTo(Screen.ReviewWrite.route) { inclusive = true }

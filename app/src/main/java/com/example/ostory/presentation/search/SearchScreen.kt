@@ -33,7 +33,8 @@ import com.example.ostory.domain.model.WorkType
 
 @Composable
 fun SearchScreenRoute(
-    onNavigateToDetail: (Int, String) -> Unit,
+    selectedDate: String? = null,
+    onNavigateToDetail: (Int, String, String?) -> Unit,
     onCloseClick: () -> Unit,
     viewModel: SearchViewModel
 ) {
@@ -52,7 +53,9 @@ fun SearchScreenRoute(
         onQueryChange = viewModel::onQueryChange,
         onSearch = viewModel::search,
         onClear = viewModel::clearSearch,
-        onNavigateToDetail = onNavigateToDetail,
+        onNavigateToDetail = { workId, type ->
+            onNavigateToDetail(workId, type, selectedDate)
+        },
         onCloseClick = onCloseClick
     )
 }

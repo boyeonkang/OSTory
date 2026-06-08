@@ -35,6 +35,7 @@ import java.util.Locale
 fun ReviewWriteScreen(
     workId: Int,
     workType: String,
+    selectedDate: String? = null,
     onNavigateToReviewSaved: () -> Unit,
     onNavigateBack: () -> Unit,
     viewModel: ReviewWriteViewModel = viewModel()
@@ -50,9 +51,13 @@ fun ReviewWriteScreen(
         viewModel.loadWorkDetail(workId, workType)
     }
 
-    val today = LocalDate.now()
+    val date = if (!selectedDate.isNullOrEmpty()) {
+        LocalDate.parse(selectedDate, DateTimeFormatter.ofPattern("yyyy-MM-dd"))
+    } else {
+        LocalDate.now()
+    }
     val formatter = DateTimeFormatter.ofPattern("yyyy년 M월 d일 (E)", Locale.KOREAN)
-    val formattedDate = today.format(formatter)
+    val formattedDate = date.format(formatter)
 
     Scaffold(
         topBar = {
@@ -89,7 +94,7 @@ fun ReviewWriteScreen(
                 Button(
                     onClick = {
                         if (isSaveEnabled) {
-                            val success = viewModel.saveReviewRecord()
+                            val success = viewModel.saveReviewRecord(selectedDate)
                             if (success) {
                                 onNavigateToReviewSaved()
                             }

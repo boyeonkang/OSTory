@@ -28,7 +28,8 @@ import androidx.compose.foundation.lazy.items
 fun WorkDetailScreen(
     workId: Int,
     workType: String,
-    onNavigateToReviewWrite: (Int, String) -> Unit,
+    selectedDate: String? = null,
+    onNavigateToReviewWrite: (Int, String, String?) -> Unit,
     onNavigateBack: () -> Unit,
     viewModel: WorkDetailViewModel = viewModel()
 ) {
@@ -79,6 +80,7 @@ fun WorkDetailScreen(
                 WorkDetailContent(
                     work = work!!,
                     workType = workType,
+                    selectedDate = selectedDate,
                     onNavigateToReviewWrite = onNavigateToReviewWrite,
                     onNavigateBack = onNavigateBack,
                     modifier = Modifier.padding(paddingValues)
@@ -92,7 +94,8 @@ fun WorkDetailScreen(
 fun WorkDetailContent(
     work: Work,
     workType: String,
-    onNavigateToReviewWrite: (Int, String) -> Unit,
+    selectedDate: String? = null,
+    onNavigateToReviewWrite: (Int, String, String?) -> Unit,
     onNavigateBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -225,7 +228,7 @@ fun WorkDetailContent(
             Spacer(modifier = Modifier.height(32.dp))
 
             Button(
-                onClick = { onNavigateToReviewWrite(work.id, workType) },
+                onClick = { onNavigateToReviewWrite(work.id, workType, selectedDate) },
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text("감상 기록 남기기")
