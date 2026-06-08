@@ -28,7 +28,7 @@ import coil.compose.AsyncImage
 import com.example.ostory.data.repository.ReviewRepository
 import com.example.ostory.domain.model.Work
 import com.example.ostory.domain.model.OstTrack
-import com.example.ostory.presentation.detail.OstTrackItem
+import com.example.ostory.presentation.detail.OstSection
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
@@ -316,97 +316,13 @@ fun ReviewDetailScreen(
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            // 5. OST 영역
-            Row(
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(
-                    imageVector = Icons.Default.MusicNote,
-                    contentDescription = "OST",
-                    tint = Color(0xFF9C27B0),
-                    modifier = Modifier.size(24.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = "OST",
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 16.sp,
-                        color = Color(0xFF2C3E50)
-                    )
-                )
-            }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            if (isOstLoading) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 16.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.Center
-                    ) {
-                        CircularProgressIndicator(
-                            color = Color(0xFF9C27B0),
-                            modifier = Modifier.size(20.dp),
-                            strokeWidth = 2.dp
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = "OST 정보를 불러오는 중입니다...",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = Color.Gray
-                        )
-                    }
-                }
-            } else if (!isOstLoaded) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 8.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(
-                        text = "OST 정보를 불러올 수 있습니다.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = Color.Gray,
-                        modifier = Modifier.padding(bottom = 8.dp)
-                    )
-                    Button(
-                        onClick = { viewModel.fetchOst() },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF9C27B0),
-                            contentColor = Color.White
-                        ),
-                        shape = RoundedCornerShape(8.dp)
-                    ) {
-                        Text("OST 정보 불러오기")
-                    }
-                }
-            } else if (ostList.isEmpty()) {
-                Text(
-                    text = "등록된 OST 정보가 없습니다.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = Color(0xFF9E9E9E),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 16.dp),
-                    textAlign = TextAlign.Center
-                )
-            } else {
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    ostList.forEach { track ->
-                        OstTrackItem(track = track, workTitle = record?.titleKo ?: "")
-                    }
-                }
-            }
+            OstSection(
+                workTitle = record.titleKo ?: "",
+                ostList = ostList,
+                isOstLoading = isOstLoading,
+                isOstLoaded = isOstLoaded,
+                onFetchOstClick = { viewModel.fetchOst() }
+            )
 
             Spacer(modifier = Modifier.height(24.dp))
         }
