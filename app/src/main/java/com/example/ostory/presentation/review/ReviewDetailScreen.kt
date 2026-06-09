@@ -25,9 +25,13 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import android.content.Intent
+import androidx.compose.material.icons.filled.Share
+import androidx.compose.ui.platform.LocalContext
 import com.example.ostory.data.repository.ReviewRepository
 import com.example.ostory.domain.model.Work
 import com.example.ostory.domain.model.OstTrack
+import com.example.ostory.domain.model.ReviewRecord
 import com.example.ostory.presentation.detail.OstSection
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -40,6 +44,8 @@ fun ReviewDetailScreen(
     onNavigateBack: () -> Unit,
     viewModel: ReviewDetailViewModel
 ) {
+    val context = LocalContext.current
+
     LaunchedEffect(recordId) {
         viewModel.loadReviewRecord(recordId)
     }
@@ -164,6 +170,13 @@ fun ReviewDetailScreen(
                     }
                 },
                 actions = {
+                    IconButton(onClick = { shareReviewRecord(context, record) }) {
+                        Icon(
+                            imageVector = Icons.Default.Share,
+                            contentDescription = "공유",
+                            tint = Color.DarkGray
+                        )
+                    }
                     IconButton(onClick = { showDeleteDialog = true }) {
                         Icon(
                             imageVector = Icons.Default.Delete,
@@ -326,5 +339,32 @@ fun ReviewDetailScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
         }
+    }
+}
+
+private fun shareReviewRecord(context: android.content.Context, record: ReviewRecord?) {
+    if (record == null) return
+    try {
+        val rating = record.rating.coerceIn(0, 5)
+        val stars = "★".repeat(rating) + "☆".repeat(5 - rating)
+        val title = record.titleKo ?: ""
+        val date = record.watchedDate ?: ""
+        val comment = record.comment ?: ""
+
+        val shareText = "[OSTory 감상 기록]\n\n" +
+                "작품: $title\n" +
+                "감상일: $date\n" +
+                "별점: $stars\n" +
+                "한줄평: $comment"
+
+        val sendIntent = Intent().apply {
+            action = Intent.ACTION_SEND
+            putExtra(Intent.EXTRA_TEXT, shareText)
+            type = "text/plain"
+        }
+        val shareIntent = Intent.createChooser(sendIntent, "감상 기록 공유하기")
+        context.startActivity(shareIntent)
+    } catch (e: Exception) {
+        e.printStackTrace()
     }
 }
