@@ -10,6 +10,7 @@ import com.example.ostory.ui.theme.OSToryTheme
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        com.example.ostory.data.repository.ReviewRepository.initialize(applicationContext)
         enableEdgeToEdge()
         setContent {
             OSToryTheme {
