@@ -18,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -31,6 +32,7 @@ fun PreferenceScreen(
     val averageRating by viewModel.averageRating.collectAsState()
     val isAnalyzing by viewModel.isAnalyzing.collectAsState()
     val analysisResult by viewModel.analysisResult.collectAsState()
+    val errorMessage by viewModel.errorMessage.collectAsState()
 
     Scaffold(
         containerColor = Color.White
@@ -40,7 +42,7 @@ fun PreferenceScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
                 .background(Color(0xFFFAFAFA)),
-            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 24.dp, bottom = 64.dp),
+            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 24.dp, bottom = 100.dp),
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
             // 상단 제목 및 부제
@@ -197,14 +199,42 @@ fun PreferenceScreen(
                 }
             }
 
+            // 에러 메시지 카드 (에러가 있을 때만 노출)
+            if (errorMessage != null) {
+                item {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(containerColor = Color(0xFFFFF5F5)),
+                        shape = RoundedCornerShape(16.dp),
+                        border = BorderStroke(1.dp, Color(0xFFFDA4AF).copy(alpha = 0.8f))
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 20.dp, horizontal = 20.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = errorMessage!!,
+                                fontSize = 14.sp,
+                                color = Color(0xFFB91C1C),
+                                textAlign = TextAlign.Center,
+                                lineHeight = 22.sp,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
+                    }
+                }
+            }
+
             // AI 취향 요약 보고서 카드 (분석 결과가 있고 요약이 있을 때만 노출)
             if (analysisResult != null && analysisResult!!.summary.isNotEmpty()) {
                 item {
                     Card(
                         modifier = Modifier.fillMaxWidth(),
-                        colors = CardDefaults.cardColors(containerColor = Color(0xFFF3E5F5)), // 연보라색
+                        colors = CardDefaults.cardColors(containerColor = Color(0xFFF9F5FB)),
                         shape = RoundedCornerShape(16.dp),
-                        border = BorderStroke(1.dp, Color(0xFFE1BEE7))
+                        border = BorderStroke(1.dp, Color(0xFFE1BEE7).copy(alpha = 0.5f))
                     ) {
                         Column(
                             modifier = Modifier.padding(20.dp)
@@ -230,8 +260,8 @@ fun PreferenceScreen(
                             Text(
                                 text = analysisResult!!.summary,
                                 fontSize = 14.sp,
-                                color = Color(0xFF4A148C),
-                                lineHeight = 22.sp,
+                                color = Color(0xFF3B0764),
+                                lineHeight = 24.sp,
                                 fontWeight = FontWeight.Medium
                             )
                         }
@@ -248,7 +278,8 @@ fun PreferenceScreen(
                     } else if (isAnalyzing) {
                         EmptyStateCard(message = "취향을 분석하는 중입니다.")
                     } else if (analysisResult == null) {
-                        EmptyStateCard(message = "AI 취향 분석을 시작하면 결과를 확인할 수 있습니다.")
+                        val message = if (errorMessage != null) "분석 결과를 불러오지 못했습니다." else "AI 취향 분석을 시작하면 결과를 확인할 수 있습니다."
+                        EmptyStateCard(message = message)
                     } else {
                         val genres = analysisResult!!.preferredGenres.take(3)
                         if (genres.isEmpty()) {
@@ -261,22 +292,28 @@ fun PreferenceScreen(
                                 border = BorderStroke(1.dp, Color(0xFFEEEEEE))
                             ) {
                                 Column(
-                                    modifier = Modifier.padding(16.dp),
-                                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                                    modifier = Modifier.padding(16.dp)
                                 ) {
                                     genres.forEachIndexed { index, genre ->
+                                        if (index > 0) {
+                                            HorizontalDivider(
+                                                color = Color(0xFFF3F4F6),
+                                                thickness = 1.dp,
+                                                modifier = Modifier.padding(vertical = 16.dp)
+                                            )
+                                        }
                                         Column(modifier = Modifier.fillMaxWidth()) {
                                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                                Box(
-                                                    modifier = Modifier
-                                                        .background(Color(0xFFF3E5F5), RoundedCornerShape(20.dp))
-                                                        .padding(horizontal = 12.dp, vertical = 6.dp)
+                                                Surface(
+                                                    shape = RoundedCornerShape(50),
+                                                    color = Color(0xFFF3E5F5),
+                                                    contentColor = Color(0xFF9C27B0)
                                                 ) {
                                                     Text(
                                                         text = genre.name,
                                                         fontSize = 12.sp,
                                                         fontWeight = FontWeight.Bold,
-                                                        color = Color(0xFF9C27B0)
+                                                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
                                                     )
                                                 }
                                             }
@@ -284,8 +321,10 @@ fun PreferenceScreen(
                                             Text(
                                                 text = genre.reason,
                                                 fontSize = 13.sp,
-                                                color = Color(0xFF555555),
-                                                lineHeight = 18.sp
+                                                color = Color(0xFF6B7280),
+                                                lineHeight = 20.sp,
+                                                maxLines = 3,
+                                                overflow = TextOverflow.Ellipsis
                                             )
                                         }
                                     }
@@ -305,7 +344,8 @@ fun PreferenceScreen(
                     } else if (isAnalyzing) {
                         EmptyStateCard(message = "취향을 분석하는 중입니다.")
                     } else if (analysisResult == null) {
-                        EmptyStateCard(message = "AI 취향 분석을 시작하면 결과를 확인할 수 있습니다.")
+                        val message = if (errorMessage != null) "분석 결과를 불러오지 못했습니다." else "AI 취향 분석을 시작하면 결과를 확인할 수 있습니다."
+                        EmptyStateCard(message = message)
                     } else {
                         val keywords = analysisResult!!.musicKeywords.take(3)
                         if (keywords.isEmpty()) {
@@ -315,25 +355,33 @@ fun PreferenceScreen(
                                 modifier = Modifier.fillMaxWidth(),
                                 colors = CardDefaults.cardColors(containerColor = Color.White),
                                 shape = RoundedCornerShape(16.dp),
-                                border = BorderStroke(1.dp, Color(0xFFEEEEEE))
+                                border = BorderStroke(1.dp, Color(0xFFFFE0B2).copy(alpha = 0.5f))
                             ) {
                                 Column(
-                                    modifier = Modifier.padding(16.dp),
-                                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                                    modifier = Modifier.padding(16.dp)
                                 ) {
                                     keywords.forEachIndexed { index, music ->
+                                        if (index > 0) {
+                                            HorizontalDivider(
+                                                color = Color(0xFFFFF7ED),
+                                                thickness = 1.dp,
+                                                modifier = Modifier.padding(vertical = 16.dp)
+                                            )
+                                        }
                                         Column(modifier = Modifier.fillMaxWidth()) {
                                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                                Box(
-                                                    modifier = Modifier
-                                                        .background(Color(0xFFFFF3E0), RoundedCornerShape(20.dp))
-                                                        .padding(horizontal = 12.dp, vertical = 6.dp)
+                                                Surface(
+                                                    shape = RoundedCornerShape(50),
+                                                    color = Color(0xFFFFF3E0),
+                                                    contentColor = Color(0xFFE65100)
                                                 ) {
+                                                    val cleanKeyword = music.keyword.trim()
+                                                    val displayKeyword = if (cleanKeyword.startsWith("#")) cleanKeyword else "#$cleanKeyword"
                                                     Text(
-                                                        text = "#${music.keyword}",
+                                                        text = displayKeyword,
                                                         fontSize = 12.sp,
                                                         fontWeight = FontWeight.Bold,
-                                                        color = Color(0xFFE65100)
+                                                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
                                                     )
                                                 }
                                             }
@@ -341,8 +389,10 @@ fun PreferenceScreen(
                                             Text(
                                                 text = music.reason,
                                                 fontSize = 13.sp,
-                                                color = Color(0xFF555555),
-                                                lineHeight = 18.sp
+                                                color = Color(0xFF6B7280),
+                                                lineHeight = 20.sp,
+                                                maxLines = 3,
+                                                overflow = TextOverflow.Ellipsis
                                             )
                                         }
                                     }
@@ -362,7 +412,8 @@ fun PreferenceScreen(
                     } else if (isAnalyzing) {
                         EmptyStateCard(message = "취향을 분석하는 중입니다.")
                     } else if (analysisResult == null) {
-                        EmptyStateCard(message = "AI 취향 분석을 시작하면 결과를 확인할 수 있습니다.")
+                        val message = if (errorMessage != null) "분석 결과를 불러오지 못했습니다." else "AI 취향 분석을 시작하면 결과를 확인할 수 있습니다."
+                        EmptyStateCard(message = message)
                     } else {
                         val recommendations = analysisResult!!.recommendations.take(3)
                         if (recommendations.isEmpty()) {
@@ -375,34 +426,50 @@ fun PreferenceScreen(
                                 border = BorderStroke(1.dp, Color(0xFFEEEEEE))
                             ) {
                                 Column(
-                                    modifier = Modifier.padding(16.dp),
-                                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                                    modifier = Modifier.padding(16.dp)
                                 ) {
                                     recommendations.forEachIndexed { index, rec ->
-                                        Column(modifier = Modifier.fillMaxWidth()) {
-                                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                                Icon(
-                                                    imageVector = Icons.Default.Movie,
-                                                    contentDescription = "추천 작품",
-                                                    tint = Color(0xFF4CAF50),
-                                                    modifier = Modifier.size(16.dp)
-                                                )
-                                                Spacer(modifier = Modifier.width(6.dp))
+                                        if (index > 0) {
+                                            HorizontalDivider(
+                                                color = Color(0xFFF3F4F6),
+                                                thickness = 1.dp,
+                                                modifier = Modifier.padding(vertical = 16.dp)
+                                            )
+                                        }
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            verticalAlignment = Alignment.Top
+                                        ) {
+                                            Surface(
+                                                shape = RoundedCornerShape(8.dp),
+                                                color = Color(0xFFE8F5E9),
+                                                modifier = Modifier.size(28.dp)
+                                            ) {
+                                                Box(contentAlignment = Alignment.Center) {
+                                                    Icon(
+                                                        imageVector = Icons.Default.Movie,
+                                                        contentDescription = "추천 작품",
+                                                        tint = Color(0xFF4CAF50),
+                                                        modifier = Modifier.size(16.dp)
+                                                    )
+                                                }
+                                            }
+                                            Spacer(modifier = Modifier.width(12.dp))
+                                            Column(modifier = Modifier.weight(1f)) {
                                                 Text(
                                                     text = rec.title,
-                                                    fontSize = 14.sp,
+                                                    fontSize = 15.sp,
                                                     fontWeight = FontWeight.Bold,
                                                     color = Color.Black
                                                 )
+                                                Spacer(modifier = Modifier.height(4.dp))
+                                                Text(
+                                                    text = rec.reason,
+                                                    fontSize = 13.sp,
+                                                    color = Color(0xFF6B7280),
+                                                    lineHeight = 20.sp
+                                                )
                                             }
-                                            Spacer(modifier = Modifier.height(6.dp))
-                                            Text(
-                                                text = rec.reason,
-                                                fontSize = 13.sp,
-                                                color = Color(0xFF666666),
-                                                lineHeight = 18.sp,
-                                                modifier = Modifier.padding(start = 22.dp)
-                                            )
                                         }
                                     }
                                 }
@@ -430,9 +497,9 @@ fun SectionHeader(title: String) {
 fun EmptyStateCard(message: String) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFFF8F9FA)),
-        shape = RoundedCornerShape(12.dp),
-        border = BorderStroke(1.dp, Color(0xFFE9ECEF))
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        shape = RoundedCornerShape(16.dp),
+        border = BorderStroke(1.dp, Color(0xFFEEEEEE))
     ) {
         Box(
             modifier = Modifier

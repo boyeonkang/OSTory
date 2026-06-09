@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import retrofit2.HttpException
 
 class PreferenceAnalysisViewModel(
     private val reviewRepository: ReviewRepository = ReviewRepository.getInstance(),
@@ -49,6 +50,9 @@ class PreferenceAnalysisViewModel(
     private val _analysisResult = MutableStateFlow<PreferenceAnalysisResult?>(null)
     val analysisResult: StateFlow<PreferenceAnalysisResult?> = _analysisResult.asStateFlow()
 
+    private val _errorMessage = MutableStateFlow<String?>(null)
+    val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
+
     fun analyzePreferences() {
         val currentRecords = records.value
         if (currentRecords.isEmpty()) return
@@ -56,12 +60,23 @@ class PreferenceAnalysisViewModel(
 
         viewModelScope.launch {
             _isAnalyzing.value = true
+            _errorMessage.value = null
             try {
                 val result = geminiRepository.analyzePreference(currentRecords)
                 _analysisResult.value = result
+                _errorMessage.value = null
+            } catch (e: HttpException) {
+                e.printStackTrace()
+                if (e.code() == 429) {
+                    _errorMessage.value = "오늘의 AI 분석 요청 한도를 초과했습니다. 잠시 후 다시 시도하거나 내일 다시 이용해 주세요."
+                } else {
+                    _errorMessage.value = "AI 취향 분석 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요."
+                }
+                _analysisResult.value = null
             } catch (e: Exception) {
                 e.printStackTrace()
-                _analysisResult.value = PreferenceAnalysisResult()
+                _errorMessage.value = "AI 취향 분석 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요."
+                _analysisResult.value = null
             } finally {
                 _isAnalyzing.value = false
             }

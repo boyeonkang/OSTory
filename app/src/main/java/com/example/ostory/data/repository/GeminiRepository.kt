@@ -126,7 +126,7 @@ class GeminiRepository {
             analysisResult ?: PreferenceAnalysisResult()
         } catch (e: Exception) {
             e.printStackTrace()
-            PreferenceAnalysisResult()
+            throw e
         }
     }
 }

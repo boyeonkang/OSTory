@@ -2,9 +2,14 @@ package com.example.ostory.presentation.detail
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.background
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Movie
 import androidx.compose.material.icons.filled.MusicNote
+import androidx.compose.material.icons.filled.ArrowBackIosNew
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.automirrored.filled.StarHalf
+import androidx.compose.material.icons.outlined.Star
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -18,6 +23,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.example.ostory.domain.model.Work
@@ -52,7 +58,9 @@ fun WorkDetailScreen(
         viewModel.loadWorkDetail(workId, workType)
     }
 
-    Scaffold { paddingValues ->
+    Scaffold(
+        containerColor = Color.White
+    ) { paddingValues ->
         when {
             isLoading -> {
                 Box(
@@ -121,40 +129,56 @@ fun WorkDetailContent(
     LazyColumn(
         modifier = modifier
             .fillMaxSize()
-            .padding(16.dp)
+            .background(Color.White)
+            .padding(horizontal = 24.dp)
     ) {
         item {
-            OutlinedButton(onClick = onNavigateBack) {
-                Text("뒤로 가기")
+            IconButton(
+                onClick = onNavigateBack,
+                modifier = Modifier
+                    .padding(top = 8.dp)
+                    .offset(x = (-12).dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.ArrowBackIosNew,
+                    contentDescription = "뒤로가기",
+                    tint = Color.Black,
+                    modifier = Modifier.size(20.dp)
+                )
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
-            if (work.posterPath != null) {
-                AsyncImage(
-                    model = work.posterPath,
-                    contentDescription = work.titleKo,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(320.dp)
-                        .clip(RoundedCornerShape(16.dp)),
-                    contentScale = ContentScale.Fit
-                )
-            } else {
-                Surface(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(320.dp)
-                        .clip(RoundedCornerShape(16.dp)),
-                    color = Color(0xFFE0E0E0)
-                ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Icon(
-                            imageVector = Icons.Default.Movie,
-                            contentDescription = "포스터 없음",
-                            modifier = Modifier.size(64.dp),
-                            tint = Color.Gray
-                        )
+            Box(
+                modifier = Modifier.fillMaxWidth(),
+                contentAlignment = Alignment.Center
+            ) {
+                if (work.posterPath != null) {
+                    AsyncImage(
+                        model = work.posterPath,
+                        contentDescription = work.titleKo,
+                        modifier = Modifier
+                            .width(280.dp)
+                            .height(400.dp)
+                            .clip(RoundedCornerShape(8.dp)),
+                        contentScale = ContentScale.Crop
+                    )
+                } else {
+                    Surface(
+                        modifier = Modifier
+                            .width(280.dp)
+                            .height(400.dp)
+                            .clip(RoundedCornerShape(8.dp)),
+                        color = Color(0xFFE0E0E0)
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(
+                                imageVector = Icons.Default.Movie,
+                                contentDescription = "포스터 없음",
+                                modifier = Modifier.size(64.dp),
+                                tint = Color.Gray
+                            )
+                        }
                     }
                 }
             }
@@ -163,86 +187,154 @@ fun WorkDetailContent(
 
             Text(
                 text = work.titleKo,
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold
+                style = MaterialTheme.typography.headlineMedium.copy(
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 24.sp
+                ),
+                color = Color.Black
             )
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(6.dp))
 
             Text(
                 text = work.titleEn,
-                style = MaterialTheme.typography.titleMedium,
-                color = Color.DarkGray
+                style = MaterialTheme.typography.bodyLarge,
+                color = Color(0xFF6B7280)
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            Text(
-                text = if (work.type == WorkType.MOVIE) "영화" else "드라마",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.primary,
-                fontWeight = FontWeight.Bold
-            )
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                val typeText = if (work.type == WorkType.MOVIE) "영화" else "드라마"
+                val yearText = if (work.year > 0) "${work.year}" else "연도 정보 없음"
 
-            Spacer(modifier = Modifier.height(8.dp))
+                Surface(
+                    shape = RoundedCornerShape(50),
+                    color = Color(0xFFF1F3F5),
+                    contentColor = Color(0xFF4B5563)
+                ) {
+                    Text(
+                        text = typeText,
+                        style = MaterialTheme.typography.bodyMedium.copy(fontSize = 12.sp, fontWeight = FontWeight.Medium),
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                    )
+                }
 
-            Text(
-                text = if (work.year > 0) "${work.year}년" else "연도 정보 없음",
-                style = MaterialTheme.typography.bodyMedium
-            )
+                Surface(
+                    shape = RoundedCornerShape(50),
+                    color = Color(0xFFF1F3F5),
+                    contentColor = Color(0xFF4B5563)
+                ) {
+                    Text(
+                        text = yearText,
+                        style = MaterialTheme.typography.bodyMedium.copy(fontSize = 12.sp, fontWeight = FontWeight.Medium),
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                    )
+                }
+            }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
             if (work.genres.isNotEmpty()) {
                 Text(
                     text = "장르",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        color = Color(0xFF6B7280),
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp
+                    )
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
 
                 LazyRow(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.fillMaxWidth()
                 ) {
                     items(work.genres) { genre ->
                         Surface(
                             shape = RoundedCornerShape(50),
-                            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
-                            contentColor = MaterialTheme.colorScheme.primary
+                            color = Color(0xFF0F172A),
+                            contentColor = Color.White
                         ) {
                             Text(
                                 text = genre.name,
-                                style = MaterialTheme.typography.bodySmall,
-                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                                style = MaterialTheme.typography.bodyMedium.copy(fontSize = 12.sp, fontWeight = FontWeight.Medium),
+                                modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp)
                             )
                         }
                     }
                 }
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(24.dp))
             }
 
             Text(
-                text = "평점 ${String.format("%.1f", work.rating)}",
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.Bold
-            )
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            Text(
                 text = "줄거리",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
+                style = MaterialTheme.typography.titleMedium.copy(
+                    color = Color(0xFF6B7280),
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 14.sp
+                )
             )
 
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
                 text = work.plot.ifBlank { "줄거리 정보가 없습니다." },
-                style = MaterialTheme.typography.bodyMedium
+                style = MaterialTheme.typography.bodyMedium.copy(
+                    lineHeight = 22.sp,
+                    color = Color(0xFF374151)
+                )
             )
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Text(
+                text = "평점",
+                style = MaterialTheme.typography.titleMedium.copy(
+                    color = Color(0xFF6B7280),
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 14.sp
+                )
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                val rating5 = (work.rating / 2.0).coerceIn(0.0, 5.0)
+                for (i in 1..5) {
+                    val starIcon = when {
+                        rating5 >= i - 0.25 -> Icons.Filled.Star
+                        rating5 >= i - 0.75 -> Icons.AutoMirrored.Filled.StarHalf
+                        else -> Icons.Outlined.Star
+                    }
+                    val starTint = when {
+                        rating5 >= i - 0.75 -> Color(0xFFFFC107) // Yellow for filled and half stars
+                        else -> Color(0xFFD1D1D6) // Light gray for empty stars
+                    }
+                    Icon(
+                        imageVector = starIcon,
+                        contentDescription = null,
+                        tint = starTint,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "${String.format("%.1f", rating5)} / 5.0",
+                    style = MaterialTheme.typography.bodyLarge.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF374151)
+                    )
+                )
+            }
 
             Spacer(modifier = Modifier.height(32.dp))
 
@@ -258,12 +350,22 @@ fun WorkDetailContent(
 
             Button(
                 onClick = { onNavigateToReviewWrite(work.id, workType, selectedDate) },
-                modifier = Modifier.fillMaxWidth()
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFF9C27B0),
+                    contentColor = Color.White
+                ),
+                shape = RoundedCornerShape(8.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(52.dp)
             ) {
-                Text("감상 기록 남기기")
+                Text(
+                    text = "감상 기록 남기기",
+                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
+                )
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(48.dp))
         }
     }
 }
@@ -299,9 +401,11 @@ fun WorkDetailOstSection(
             Spacer(modifier = Modifier.width(8.dp))
             Text(
                 text = "OST",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = Color.Black
+                style = MaterialTheme.typography.titleMedium.copy(
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.Black
+                )
             )
         }
 
@@ -401,7 +505,7 @@ fun WorkDetailOstTrackItem(
     val context = LocalContext.current
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        color = Color(0xFFF2F2F7),
+        color = Color(0xFFF8F9FA),
         shape = RoundedCornerShape(12.dp)
     ) {
         Column(
@@ -417,16 +521,21 @@ fun WorkDetailOstTrackItem(
                 ) {
                     Text(
                         text = track.title.orEmpty(),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 16.sp
+                        ),
                         color = Color.Black,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
+                    Spacer(modifier = Modifier.height(2.dp))
                     Text(
                         text = track.artist.orEmpty(),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = Color.DarkGray,
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            fontSize = 14.sp
+                        ),
+                        color = Color.Gray,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
@@ -445,51 +554,59 @@ fun WorkDetailOstTrackItem(
                         }
                     },
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFFFF0000),
+                        containerColor = Color(0xFFEF4444),
                         contentColor = Color.White
                     ),
-                    shape = RoundedCornerShape(8.dp),
+                    shape = RoundedCornerShape(50),
                     contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
-                    modifier = Modifier.height(36.dp)
+                    modifier = Modifier.height(32.dp)
                 ) {
                     Text(
                         text = "YouTube에서 보기",
-                        style = MaterialTheme.typography.labelMedium,
+                        style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp),
                         fontWeight = FontWeight.Bold
                     )
                 }
             }
             
-            Spacer(modifier = Modifier.height(8.dp))
+            val hasAlbum = !track.album.isNullOrBlank()
+            val hasCompOrLyr = !track.composer.isNullOrBlank() || !track.lyricist.isNullOrBlank()
+            val hasOrigArtist = !track.originalArtist.isNullOrBlank()
             
-            HorizontalDivider(color = Color.LightGray.copy(alpha = 0.5f), thickness = 0.5.dp)
-            
-            Spacer(modifier = Modifier.height(8.dp))
-            
-            Text(
-                text = "앨범: ${track.album.orEmpty()}",
-                style = MaterialTheme.typography.bodySmall,
-                color = Color.Gray,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-            val comp = track.composer.orEmpty().ifBlank { "알 수 없음" }
-            val lyr = track.lyricist.orEmpty().ifBlank { "알 수 없음" }
-            Text(
-                text = "작곡: $comp | 작사: $lyr",
-                style = MaterialTheme.typography.bodySmall,
-                color = Color.Gray,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-            if (!track.originalArtist.isNullOrBlank()) {
-                Text(
-                    text = "원곡: ${track.originalArtist.orEmpty()}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Color.Gray,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
+            if (hasAlbum || hasCompOrLyr || hasOrigArtist) {
+                Spacer(modifier = Modifier.height(8.dp))
+                HorizontalDivider(color = Color(0xFFE5E7EB), thickness = 0.5.dp)
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                if (hasAlbum) {
+                    Text(
+                        text = "앨범: ${track.album.orEmpty()}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color.Gray,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+                if (hasCompOrLyr) {
+                    val comp = track.composer.orEmpty().ifBlank { "알 수 없음" }
+                    val lyr = track.lyricist.orEmpty().ifBlank { "알 수 없음" }
+                    Text(
+                        text = "작곡: $comp | 작사: $lyr",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color.Gray,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+                if (!track.originalArtist.isNullOrBlank()) {
+                    Text(
+                        text = "원곡: ${track.originalArtist.orEmpty()}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color.Gray,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
             }
         }
     }
