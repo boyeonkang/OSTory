@@ -87,7 +87,7 @@ fun SearchScreen(
                         .background(Color.White)
                 ) {
                     Text(
-                        text = "OSTory 검색 (테스트 렌더링 확인)",
+                        text = "검색",
                         color = Color.Black,
                         style = MaterialTheme.typography.titleSmall,
                         modifier = Modifier.padding(start = 16.dp, top = 8.dp)

@@ -21,7 +21,7 @@ fun ReviewSavedScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "감상 기록 저장 완료 (Placeholder)",
+                text = "감상 기록 저장 완료",
                 style = MaterialTheme.typography.headlineMedium
             )
             Spacer(modifier = Modifier.height(16.dp))

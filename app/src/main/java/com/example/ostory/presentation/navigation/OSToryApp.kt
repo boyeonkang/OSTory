@@ -117,7 +117,8 @@ fun OSToryApp() {
                     }
                 )
             ) { backStackEntry ->
-                val selectedDate = backStackEntry.arguments?.getString("selectedDate")
+                val rawDate = backStackEntry.arguments?.getString("selectedDate")
+                val selectedDate = if (rawDate == "{selectedDate}" || rawDate.isNullOrBlank()) null else rawDate
                 val searchViewModel: SearchViewModel = viewModel()
                 SearchScreenRoute(
                     selectedDate = selectedDate,
@@ -150,13 +151,15 @@ fun OSToryApp() {
             ) { backStackEntry ->
                 val workId = backStackEntry.arguments?.getInt("workId") ?: 0
                 val type = backStackEntry.arguments?.getString("type") ?: "MOVIE"
-                val selectedDate = backStackEntry.arguments?.getString("selectedDate")
+                val rawDate = backStackEntry.arguments?.getString("selectedDate")
+                val selectedDate = if (rawDate == "{selectedDate}" || rawDate.isNullOrBlank()) null else rawDate
                 WorkDetailScreen(
                     workId = workId,
                     workType = type,
                     selectedDate = selectedDate,
                     onNavigateToReviewWrite = { id, wType, date ->
-                        navController.navigate(Screen.ReviewWrite.createRoute(id, wType, date))
+                        val safeDate = if (date == "{selectedDate}" || date.isNullOrBlank()) null else date
+                        navController.navigate(Screen.ReviewWrite.createRoute(id, wType, safeDate))
                     },
                     onNavigateBack = {
                         navController.popBackStack()
@@ -177,7 +180,8 @@ fun OSToryApp() {
             ) { backStackEntry ->
                 val workId = backStackEntry.arguments?.getInt("workId") ?: 0
                 val type = backStackEntry.arguments?.getString("type") ?: "MOVIE"
-                val selectedDate = backStackEntry.arguments?.getString("selectedDate")
+                val rawDate = backStackEntry.arguments?.getString("selectedDate")
+                val selectedDate = if (rawDate == "{selectedDate}" || rawDate.isNullOrBlank()) null else rawDate
                 ReviewWriteScreen(
                     workId = workId,
                     workType = type,
@@ -199,11 +203,13 @@ fun OSToryApp() {
                 )
             ) { backStackEntry ->
                 val recordId = backStackEntry.arguments?.getInt("recordId") ?: 0
+                val reviewDetailViewModel: com.example.ostory.presentation.review.ReviewDetailViewModel = viewModel()
                 ReviewDetailScreen(
                     recordId = recordId,
                     onNavigateBack = {
                         navController.popBackStack()
-                    }
+                    },
+                    viewModel = reviewDetailViewModel
                 )
             }
             composable(Screen.Preference.route) {

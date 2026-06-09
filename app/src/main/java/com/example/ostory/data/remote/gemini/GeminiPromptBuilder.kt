@@ -2,8 +2,50 @@ package com.example.ostory.data.remote.gemini
 
 import com.example.ostory.domain.model.ReviewRecord
 import com.example.ostory.domain.model.Work
+import com.example.ostory.domain.model.WorkType
 
 object GeminiPromptBuilder {
+
+    fun buildOstPrompt(work: Work): String {
+        val genresText = work.genres.joinToString { it.name }
+        return """
+            아래 정보를 가진 영화/드라마 작품의 대표 OST 및 삽입곡(삽입음악) 정보를 최대 3개까지만 조사해줘. 가장 대표적인 OST 또는 삽입곡 3개만 우선순위대로 반환해줘.
+            
+            작품 정보:
+            - 한국어 제목: ${work.titleKo}
+            - 영어 제목: ${work.titleEn}
+            - 구분: ${if (work.type == WorkType.MOVIE) "영화" else "드라마"}
+            - 제작연도: ${work.year}년
+            - 장르: $genresText
+            - 줄거리: ${work.plot}
+            
+            조사 지침:
+            1. 실제로 이 작품에 사용된 대표적인 OST 또는 삽입곡 정보만 수집해줘.
+            2. 존재하지 않는 OST를 과하게 단정하거나 지어내지 말아줘.
+            3. title 또는 artist에 "알 수 없음"을 값으로 넣지 말아줘.
+            4. title 또는 artist를 확실하게 알 수 없거나 존재하지 않는다면 해당 항목은 JSON에 일체 포함하지 말아줘. composer, lyricist, album, duration은 모르면 "알 수 없음"을 사용할 수 있지만, title과 artist는 반드시 실제 값이 있을 때만 항목을 생성해야 해.
+            5. 알려진 공식 OST 정보가 존재하지 않거나 불확실한 경우 아래와 같이 빈 배열을 반환해줘.
+               {
+                 "ostList": []
+               }
+            6. 아래 제공된 JSON 형식으로만 응답을 생성하고, 마크다운 코드 블록(```json ```)을 포함한 어떠한 부가 설명 텍스트도 절대 포함하지 말고 순수 JSON 문자열만 반환해줘.
+            
+            JSON 응답 형식:
+            {
+              "ostList": [
+                {
+                  "title": "곡명",
+                  "artist": "가수",
+                  "composer": "작곡가 또는 알 수 없음",
+                  "lyricist": "작사가 또는 알 수 없음",
+                  "originalArtist": "원곡자 또는 null",
+                  "album": "앨범 또는 작품명",
+                  "duration": "알 수 없음"
+                }
+              ]
+            }
+        """.trimIndent()
+    }
 
     fun buildOstPrompt(title: String, type: String, year: Int): String {
         return """
@@ -56,6 +98,51 @@ object GeminiPromptBuilder {
               "musicKeywords": ["키워드1", "키워드2", "키워드3"],
               "summary": "전반적인 취향 분석 및 음악적 특징에 대한 설명 요약",
               "recommendedTitles": ["추천 작품 제목 1", "추천 작품 제목 2"]
+            }
+        """.trimIndent()
+    }
+
+    fun buildPreferenceAnalysisPrompt(records: List<ReviewRecord>): String {
+        val recordsText = records.joinToString(separator = "\n") { record ->
+            val typeText = if (record.workType == WorkType.MOVIE) "영화" else "드라마"
+            "- 작품 제목: ${record.titleKo ?: "알 수 없음"} (원제: ${record.titleEn ?: "알 수 없음"}), 구분: ${typeText}, 감상 날짜: ${record.watchedDate}, 별점: ${record.rating}/5점, 한줄평: ${record.comment}"
+        }
+
+        return """
+            사용자의 작품 감상 기록 리스트:
+            $recordsText
+            
+            위 감상 기록과 해당 작품들의 일반적인 장르 및 OST 음악 특징을 바탕으로 사용자의 영화/드라마 취향을 분석해줘.
+            특히 사용자가 기록한 한줄평과 별점, 그리고 해당 작품들의 음악적 스타일(OST)을 종합적으로 고려하여 아래 JSON 형식으로만 응답을 생성해줘.
+            마크다운 코드 블록(```json ```)을 포함한 어떠한 부가 설명 텍스트도 절대 포함하지 말고 순수 JSON 문자열만 반환해줘.
+            
+            출력 개수 제한:
+            - 선호 장르/키워드: 최대 3개
+            - 음악 취향 키워드: 최대 3개
+            - 추천 작품: 최대 3개
+            - reason(이유/근거)은 자연스럽고 간결하게 1~2줄 정도로만 작성해줘.
+            
+            JSON 응답 형식:
+            {
+              "preferredGenres": [
+                {
+                  "name": "장르 또는 취향 키워드",
+                  "reason": "근거"
+                }
+              ],
+              "musicKeywords": [
+                {
+                  "keyword": "음악 취향 키워드",
+                  "reason": "근거"
+                }
+              ],
+              "recommendations": [
+                {
+                  "title": "추천 작품명",
+                  "reason": "추천 이유"
+                }
+              ],
+              "summary": "전체 취향 요약"
             }
         """.trimIndent()
     }

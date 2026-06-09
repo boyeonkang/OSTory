@@ -22,7 +22,7 @@ fun CalendarScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "캘린더 홈 화면 (Placeholder)",
+                text = "캘린더 홈 화면",
                 style = MaterialTheme.typography.headlineMedium
             )
             Spacer(modifier = Modifier.height(16.dp))
@@ -31,7 +31,7 @@ fun CalendarScreen(
             }
             Spacer(modifier = Modifier.height(8.dp))
             Button(onClick = { onNavigateToReviewDetail(1) }) {
-                Text("임시 감상 기록 상세 보기 (ID: 1)")
+                Text("감상 기록 상세 보기 (ID: 1)")
             }
         }
     }

@@ -26,6 +26,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.example.ostory.data.repository.ReviewRepository
+import com.example.ostory.domain.model.Work
+import com.example.ostory.domain.model.OstTrack
+import com.example.ostory.presentation.detail.OstSection
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
@@ -35,11 +38,17 @@ import java.util.Locale
 fun ReviewDetailScreen(
     recordId: Int,
     onNavigateBack: () -> Unit,
-    reviewRepository: ReviewRepository = ReviewRepository.getInstance()
+    viewModel: ReviewDetailViewModel
 ) {
-    val record = remember(recordId) {
-        reviewRepository.getRecordById(recordId)
+    LaunchedEffect(recordId) {
+        viewModel.loadReviewRecord(recordId)
     }
+
+    val recordState by viewModel.record.collectAsState()
+    val record = recordState
+    val ostList by viewModel.ostList.collectAsState()
+    val isOstLoading by viewModel.isOstLoading.collectAsState()
+    val isOstLoaded by viewModel.isOstLoaded.collectAsState()
 
     var showDeleteDialog by remember { mutableStateOf(false) }
 
@@ -117,7 +126,7 @@ fun ReviewDetailScreen(
                 TextButton(
                     onClick = {
                         showDeleteDialog = false
-                        reviewRepository.deleteRecord(recordId)
+                        ReviewRepository.getInstance().deleteRecord(recordId)
                         onNavigateBack()
                     }
                 ) {
@@ -307,38 +316,12 @@ fun ReviewDetailScreen(
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            // 5. OST 영역
-            Row(
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(
-                    imageVector = Icons.Default.MusicNote,
-                    contentDescription = "OST",
-                    tint = Color(0xFF9C27B0),
-                    modifier = Modifier.size(24.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = "OST",
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 16.sp,
-                        color = Color(0xFF2C3E50)
-                    )
-                )
-            }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // 실제 OST 데이터가 없으므로 문구 표시
-            Text(
-                text = "등록된 OST 정보가 없습니다.",
-                style = MaterialTheme.typography.bodyMedium,
-                color = Color(0xFF9E9E9E),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 16.dp),
-                textAlign = TextAlign.Center
+            OstSection(
+                workTitle = record.titleKo ?: "",
+                ostList = ostList,
+                isOstLoading = isOstLoading,
+                isOstLoaded = isOstLoaded,
+                onFetchOstClick = { viewModel.fetchOst() }
             )
 
             Spacer(modifier = Modifier.height(24.dp))
