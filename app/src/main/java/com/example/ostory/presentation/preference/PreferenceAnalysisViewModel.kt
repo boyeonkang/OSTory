@@ -1,9 +1,11 @@
 package com.example.ostory.presentation.preference
 
-import androidx.lifecycle.ViewModel
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.ostory.data.repository.ReviewRepository
 import com.example.ostory.data.repository.GeminiRepository
+import com.example.ostory.data.repository.PreferenceRepository
 import com.example.ostory.domain.model.ReviewRecord
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -14,10 +16,12 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import retrofit2.HttpException
 
-class PreferenceAnalysisViewModel(
+class PreferenceAnalysisViewModel @JvmOverloads constructor(
+    application: Application,
     private val reviewRepository: ReviewRepository = ReviewRepository.getInstance(),
-    private val geminiRepository: GeminiRepository = GeminiRepository()
-) : ViewModel() {
+    private val geminiRepository: GeminiRepository = GeminiRepository(),
+    private val preferenceRepository: PreferenceRepository = PreferenceRepository()
+) : AndroidViewModel(application) {
 
     val records: StateFlow<List<ReviewRecord>> = reviewRepository.recordsFlow
         .stateIn(
@@ -136,6 +140,13 @@ class PreferenceAnalysisViewModel(
     private val _errorMessage = MutableStateFlow<String?>(null)
     val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
 
+    init {
+        val saved = preferenceRepository.loadAnalysisResult(getApplication())
+        if (saved != null) {
+            _analysisResult.value = saved
+        }
+    }
+
     fun analyzePreferences() {
         val currentRecords = records.value
         if (currentRecords.isEmpty()) return
@@ -146,8 +157,13 @@ class PreferenceAnalysisViewModel(
             _errorMessage.value = null
             try {
                 val result = geminiRepository.analyzePreference(currentRecords)
-                _analysisResult.value = result
-                _errorMessage.value = null
+                if (result.summary.isNotEmpty()) {
+                    _analysisResult.value = result
+                    _errorMessage.value = null
+                    preferenceRepository.saveAnalysisResult(getApplication(), result)
+                } else {
+                    _errorMessage.value = "AI 취향 분석 결과를 불러올 수 없습니다. API 키 설정 또는 데이터를 확인해 주세요."
+                }
             } catch (e: HttpException) {
                 e.printStackTrace()
                 if (e.code() == 429) {
@@ -155,11 +171,9 @@ class PreferenceAnalysisViewModel(
                 } else {
                     _errorMessage.value = "AI 취향 분석 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요."
                 }
-                _analysisResult.value = null
             } catch (e: Exception) {
                 e.printStackTrace()
                 _errorMessage.value = "AI 취향 분석 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요."
-                _analysisResult.value = null
             } finally {
                 _isAnalyzing.value = false
             }
