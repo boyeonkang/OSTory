@@ -2,6 +2,7 @@ package com.example.ostory.data.repository
 
 import android.content.Context
 import com.example.ostory.domain.model.ReviewRecord
+import com.example.ostory.domain.model.OstTrack
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -99,6 +100,18 @@ class ReviewRepository private constructor(context: Context?) {
             _recordsFlow.value = records.toList()
             saveToPreferences()
         }
+    }
+
+    private var tempOstList: List<OstTrack>? = null
+
+    fun setTempOstList(list: List<OstTrack>?) {
+        tempOstList = list
+    }
+
+    fun getTempOstList(): List<OstTrack>? {
+        val list = tempOstList
+        tempOstList = null
+        return list
     }
 
     fun deleteRecord(recordId: Int) {

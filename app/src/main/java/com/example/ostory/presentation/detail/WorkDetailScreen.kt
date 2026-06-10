@@ -349,7 +349,10 @@ fun WorkDetailContent(
             Spacer(modifier = Modifier.height(32.dp))
 
             Button(
-                onClick = { onNavigateToReviewWrite(work.id, workType, selectedDate) },
+                onClick = {
+                    com.example.ostory.data.repository.ReviewRepository.getInstance().setTempOstList(ostList)
+                    onNavigateToReviewWrite(work.id, workType, selectedDate)
+                },
                 colors = ButtonDefaults.buttonColors(
                     containerColor = Color(0xFF9C27B0),
                     contentColor = Color.White
