@@ -29,6 +29,8 @@ import com.example.ostory.presentation.review.ReviewWriteScreen
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.ostory.presentation.search.SearchScreenRoute
 import com.example.ostory.presentation.search.SearchViewModel
+import com.example.ostory.presentation.onboarding.OnboardingScreen
+import androidx.compose.runtime.remember
 
 sealed class Screen(val route: String, val title: String, val icon: ImageVector? = null) {
     object Calendar : Screen("calendar", "캘린더", Icons.Default.CalendarMonth)
@@ -58,12 +60,17 @@ sealed class Screen(val route: String, val title: String, val icon: ImageVector?
     object ReviewDetail : Screen("reviewDetail/{recordId}", "감상 기록 상세") {
         fun createRoute(recordId: Int) = "reviewDetail/$recordId"
     }
+    object Onboarding : Screen("onboarding", "온보딩")
 }
 
 @Composable
 fun OSToryApp() {
     val navController = rememberNavController()
     val tabItems = listOf(Screen.Calendar, Screen.Search, Screen.Preference)
+
+    val context = androidx.compose.ui.platform.LocalContext.current.applicationContext
+    val prefs = remember { context.getSharedPreferences("ostory_onboarding", android.content.Context.MODE_PRIVATE) }
+    val isFirstRun = remember { prefs.getBoolean("is_first_run", true) }
 
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -100,12 +107,22 @@ fun OSToryApp() {
     ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = Screen.Calendar.route,
+            startDestination = if (isFirstRun) Screen.Onboarding.route else Screen.Calendar.route,
             modifier = Modifier
                 .fillMaxSize()
                 .background(Color.White)
                 .padding(innerPadding)
         ) {
+            composable(Screen.Onboarding.route) {
+                OnboardingScreen(
+                    onStartClick = {
+                        prefs.edit().putBoolean("is_first_run", false).apply()
+                        navController.navigate(Screen.Calendar.route) {
+                            popUpTo(Screen.Onboarding.route) { inclusive = true }
+                        }
+                    }
+                )
+            }
             composable(Screen.Calendar.route) {
                 CalendarScreen(
                     onNavigateToSearch = { selectedDate ->
