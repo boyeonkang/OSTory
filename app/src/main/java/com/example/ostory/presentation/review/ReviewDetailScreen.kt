@@ -8,6 +8,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBackIosNew
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Movie
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.Star
@@ -42,6 +43,7 @@ import java.util.Locale
 fun ReviewDetailScreen(
     recordId: Int,
     onNavigateBack: () -> Unit,
+    onNavigateToReviewWrite: (Int, String, Int) -> Unit,
     viewModel: ReviewDetailViewModel
 ) {
     val context = LocalContext.current
@@ -170,6 +172,17 @@ fun ReviewDetailScreen(
                     }
                 },
                 actions = {
+                    IconButton(
+                        onClick = {
+                            onNavigateToReviewWrite(record.workId, record.workType.name, record.id)
+                        }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Edit,
+                            contentDescription = "수정",
+                            tint = Color.DarkGray
+                        )
+                    }
                     IconButton(onClick = { shareReviewRecord(context, record) }) {
                         Icon(
                             imageVector = Icons.Default.Share,

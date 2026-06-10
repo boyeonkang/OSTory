@@ -42,9 +42,18 @@ sealed class Screen(val route: String, val title: String, val icon: ImageVector?
         fun createRoute(workId: Int, type: String, selectedDate: String? = null) = 
             if (selectedDate != null) "detail/$workId/$type?selectedDate=$selectedDate" else "detail/$workId/$type"
     }
-    object ReviewWrite : Screen("reviewWrite/{workId}/{type}?selectedDate={selectedDate}", "감상 기록 작성") {
-        fun createRoute(workId: Int, type: String, selectedDate: String? = null) = 
-            if (selectedDate != null) "reviewWrite/$workId/$type?selectedDate=$selectedDate" else "reviewWrite/$workId/$type"
+    object ReviewWrite : Screen("reviewWrite/{workId}/{type}?selectedDate={selectedDate}&reviewId={reviewId}", "감상 기록 작성") {
+        fun createRoute(workId: Int, type: String, selectedDate: String? = null, reviewId: Int? = null) = 
+            buildString {
+                append("reviewWrite/$workId/$type")
+                val params = mutableListOf<String>()
+                if (selectedDate != null) params.add("selectedDate=$selectedDate")
+                if (reviewId != null) params.add("reviewId=$reviewId")
+                if (params.isNotEmpty()) {
+                    append("?")
+                    append(params.joinToString("&"))
+                }
+            }
     }
     object ReviewDetail : Screen("reviewDetail/{recordId}", "감상 기록 상세") {
         fun createRoute(recordId: Int) = "reviewDetail/$recordId"
@@ -175,6 +184,10 @@ fun OSToryApp() {
                         type = NavType.StringType
                         nullable = true
                         defaultValue = null
+                    },
+                    navArgument("reviewId") {
+                        type = NavType.IntType
+                        defaultValue = 0
                     }
                 )
             ) { backStackEntry ->
@@ -182,13 +195,20 @@ fun OSToryApp() {
                 val type = backStackEntry.arguments?.getString("type") ?: "MOVIE"
                 val rawDate = backStackEntry.arguments?.getString("selectedDate")
                 val selectedDate = if (rawDate == "{selectedDate}" || rawDate.isNullOrBlank()) null else rawDate
+                val reviewId = backStackEntry.arguments?.getInt("reviewId") ?: 0
+                val safeReviewId = if (reviewId <= 0) null else reviewId
                 ReviewWriteScreen(
                     workId = workId,
                     workType = type,
                     selectedDate = selectedDate,
+                    reviewId = safeReviewId,
                     onNavigateToReviewSaved = {
-                        navController.navigate(Screen.Calendar.route) {
-                            popUpTo(Screen.Calendar.route) { inclusive = false }
+                        if (safeReviewId != null) {
+                            navController.popBackStack()
+                        } else {
+                            navController.navigate(Screen.Calendar.route) {
+                                popUpTo(Screen.Calendar.route) { inclusive = false }
+                            }
                         }
                     },
                     onNavigateBack = {
@@ -208,6 +228,9 @@ fun OSToryApp() {
                     recordId = recordId,
                     onNavigateBack = {
                         navController.popBackStack()
+                    },
+                    onNavigateToReviewWrite = { workId, type, rId ->
+                        navController.navigate(Screen.ReviewWrite.createRoute(workId, type, null, rId))
                     },
                     viewModel = reviewDetailViewModel
                 )

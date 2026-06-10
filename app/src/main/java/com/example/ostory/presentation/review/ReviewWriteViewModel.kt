@@ -43,6 +43,14 @@ class ReviewWriteViewModel(
         initialValue = false
     )
 
+    private val _watchedDate = MutableStateFlow<String>("")
+    val watchedDate: StateFlow<String> = _watchedDate.asStateFlow()
+
+    private val _isEditMode = MutableStateFlow(false)
+    val isEditMode: StateFlow<Boolean> = _isEditMode.asStateFlow()
+
+    private var editingRecordId: Int = 0
+
     fun loadWorkDetail(workId: Int, workType: String) {
         val type = when (workType.uppercase()) {
             "MOVIE" -> WorkType.MOVIE
@@ -87,24 +95,60 @@ class ReviewWriteViewModel(
         }
     }
 
+    fun initDate(date: String?) {
+        if (_watchedDate.value.isEmpty()) {
+            _watchedDate.value = if (!date.isNullOrBlank() && date != "{selectedDate}") {
+                date
+            } else {
+                LocalDate.now().toString()
+            }
+        }
+    }
+
+    fun setWatchedDate(dateStr: String) {
+        _watchedDate.value = dateStr
+    }
+
+    fun loadReviewRecord(reviewId: Int) {
+        editingRecordId = reviewId
+        _isEditMode.value = true
+        val record = ReviewRepository.getInstance().getRecordById(reviewId)
+        if (record != null) {
+            _rating.value = record.rating
+            _reviewText.value = record.comment
+            _watchedDate.value = record.watchedDate
+            loadWorkDetail(record.workId, record.workType.name)
+        }
+    }
+
     fun saveReviewRecord(selectedDate: String? = null): Boolean {
         val currentWork = _work.value ?: return false
         val ratingVal = _rating.value
         val commentVal = _reviewText.value
         if (ratingVal !in 1..5 || commentVal.trim().isEmpty()) return false
 
+        val finalDate = if (_isEditMode.value) {
+            _watchedDate.value
+        } else {
+            if (!selectedDate.isNullOrBlank() && selectedDate != "{selectedDate}") selectedDate else _watchedDate.value.ifBlank { LocalDate.now().toString() }
+        }
+
         val record = ReviewRecord(
-            id = 0,
+            id = if (_isEditMode.value) editingRecordId else 0,
             workId = currentWork.id,
             workType = currentWork.type,
-            watchedDate = selectedDate ?: LocalDate.now().toString(), // "yyyy-MM-dd"
+            watchedDate = finalDate,
             rating = ratingVal,
             comment = commentVal,
             posterPath = currentWork.posterPath,
             titleKo = currentWork.titleKo,
             titleEn = currentWork.titleEn
         )
-        ReviewRepository.getInstance().addRecord(record)
+        if (_isEditMode.value) {
+            ReviewRepository.getInstance().updateRecord(record)
+        } else {
+            ReviewRepository.getInstance().addRecord(record)
+        }
         return true
     }
 }
