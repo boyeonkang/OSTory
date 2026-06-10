@@ -31,8 +31,15 @@ class ReviewDetailViewModel(
     private val _isOstLoaded = MutableStateFlow(false)
     val isOstLoaded: StateFlow<Boolean> = _isOstLoaded.asStateFlow()
 
+    private var collectJob: kotlinx.coroutines.Job? = null
+
     fun loadReviewRecord(recordId: Int) {
-        _record.value = reviewRepository.getRecordById(recordId)
+        collectJob?.cancel()
+        collectJob = viewModelScope.launch {
+            reviewRepository.recordsFlow.collect { list ->
+                _record.value = list.find { it.id == recordId }
+            }
+        }
         _isOstLoaded.value = false
         _ostList.value = emptyList()
     }

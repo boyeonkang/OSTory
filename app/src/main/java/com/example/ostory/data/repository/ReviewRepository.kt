@@ -92,6 +92,15 @@ class ReviewRepository private constructor(context: Context?) {
         saveToPreferences()
     }
 
+    fun updateRecord(record: ReviewRecord) {
+        val index = records.indexOfFirst { it.id == record.id }
+        if (index != -1) {
+            records[index] = record
+            _recordsFlow.value = records.toList()
+            saveToPreferences()
+        }
+    }
+
     fun deleteRecord(recordId: Int) {
         records.removeAll { it.id == recordId }
         _recordsFlow.value = records.toList()

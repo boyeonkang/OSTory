@@ -9,10 +9,9 @@ import androidx.compose.material.icons.filled.Movie
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.Star
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
+import java.time.Instant
+import java.time.ZoneId
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -36,6 +35,7 @@ fun ReviewWriteScreen(
     workId: Int,
     workType: String,
     selectedDate: String? = null,
+    reviewId: Int? = null,
     onNavigateToReviewSaved: () -> Unit,
     onNavigateBack: () -> Unit,
     viewModel: ReviewWriteViewModel = viewModel()
@@ -46,19 +46,30 @@ fun ReviewWriteScreen(
     val rating by viewModel.rating.collectAsState()
     val reviewText by viewModel.reviewText.collectAsState()
     val isSaveEnabled by viewModel.isSaveEnabled.collectAsState()
+    val watchedDateState by viewModel.watchedDate.collectAsState()
+    val isEditMode by viewModel.isEditMode.collectAsState()
 
-    LaunchedEffect(workId, workType) {
-        viewModel.loadWorkDetail(workId, workType)
+    var showDatePicker by remember { mutableStateOf(false) }
+
+    LaunchedEffect(workId, workType, reviewId) {
+        if (reviewId != null && reviewId > 0) {
+            viewModel.loadReviewRecord(reviewId)
+        } else {
+            viewModel.loadWorkDetail(workId, workType)
+            viewModel.initDate(selectedDate)
+        }
     }
 
-    val date = if (!selectedDate.isNullOrBlank() && selectedDate != "{selectedDate}") {
-        try {
-            LocalDate.parse(selectedDate, DateTimeFormatter.ofPattern("yyyy-MM-dd"))
-        } catch (e: Exception) {
+    val date = remember(watchedDateState) {
+        if (watchedDateState.isNotBlank()) {
+            try {
+                LocalDate.parse(watchedDateState, DateTimeFormatter.ofPattern("yyyy-MM-dd"))
+            } catch (e: Exception) {
+                LocalDate.now()
+            }
+        } else {
             LocalDate.now()
         }
-    } else {
-        LocalDate.now()
     }
     val formatter = DateTimeFormatter.ofPattern("yyyy년 M월 d일 (E)", Locale.KOREAN)
     val formattedDate = date.format(formatter)
@@ -108,7 +119,7 @@ fun ReviewWriteScreen(
                             } else {
                                 null
                             }
-                            val success = viewModel.saveReviewRecord(safeSelectedDate)
+                            val success = viewModel.saveReviewRecord(if (isEditMode) null else safeSelectedDate)
                             if (success) {
                                 onNavigateToReviewSaved()
                             }
@@ -253,7 +264,8 @@ fun ReviewWriteScreen(
                                 style = MaterialTheme.typography.bodyMedium.copy(
                                     color = Color(0xFF7F7F7F),
                                     fontSize = 14.sp
-                                )
+                                ),
+                                modifier = Modifier.clickable { showDatePicker = true }
                             )
                         }
                     }
@@ -354,6 +366,37 @@ fun ReviewWriteScreen(
                             fontSize = 12.sp
                         )
                     )
+                }
+
+                if (showDatePicker) {
+                    val datePickerState = rememberDatePickerState(
+                        initialSelectedDateMillis = date.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
+                    )
+                    DatePickerDialog(
+                        onDismissRequest = { showDatePicker = false },
+                        confirmButton = {
+                            TextButton(
+                                onClick = {
+                                    datePickerState.selectedDateMillis?.let { millis ->
+                                        val localDate = Instant.ofEpochMilli(millis)
+                                            .atZone(ZoneId.systemDefault())
+                                            .toLocalDate()
+                                        viewModel.setWatchedDate(localDate.toString())
+                                    }
+                                    showDatePicker = false
+                                }
+                            ) {
+                                Text("확인", color = Color(0xFF9C27B0))
+                            }
+                        },
+                        dismissButton = {
+                            TextButton(onClick = { showDatePicker = false }) {
+                                Text("취소", color = Color.Gray)
+                            }
+                        }
+                    ) {
+                        DatePicker(state = datePickerState)
+                    }
                 }
             }
         }
