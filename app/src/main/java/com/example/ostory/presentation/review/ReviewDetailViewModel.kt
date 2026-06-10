@@ -35,13 +35,18 @@ class ReviewDetailViewModel(
 
     fun loadReviewRecord(recordId: Int) {
         collectJob?.cancel()
-        collectJob = viewModelScope.launch {
-            reviewRepository.recordsFlow.collect { list ->
-                _record.value = list.find { it.id == recordId }
-            }
-        }
         _isOstLoaded.value = false
         _ostList.value = emptyList()
+        collectJob = viewModelScope.launch {
+            reviewRepository.recordsFlow.collect { list ->
+                val record = list.find { it.id == recordId }
+                _record.value = record
+                if (record != null && !record.ostList.isNullOrEmpty()) {
+                    _ostList.value = record.ostList
+                    _isOstLoaded.value = true
+                }
+            }
+        }
     }
 
     fun fetchOst() {
@@ -70,6 +75,10 @@ class ReviewDetailViewModel(
                 )
                 val ost = geminiRepository.getOstInfo(tempWork)
                 _ostList.value = ost
+                if (ost.isNotEmpty()) {
+                    val updatedRecord = currentRecord.copy(ostList = ost)
+                    reviewRepository.updateRecord(updatedRecord)
+                }
             } catch (e: Exception) {
                 e.printStackTrace()
                 _ostList.value = emptyList()

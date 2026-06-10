@@ -57,6 +57,8 @@ fun ReviewWriteScreen(
         } else {
             viewModel.loadWorkDetail(workId, workType)
             viewModel.initDate(selectedDate)
+            val tempOsts = com.example.ostory.data.repository.ReviewRepository.getInstance().getTempOstList()
+            viewModel.setTempOstList(tempOsts)
         }
     }
 

@@ -9,5 +9,6 @@ data class ReviewRecord(
     val comment: String,
     val posterPath: String? = null,
     val titleKo: String? = null,
-    val titleEn: String? = null
+    val titleEn: String? = null,
+    val ostList: List<OstTrack> = emptyList()
 )

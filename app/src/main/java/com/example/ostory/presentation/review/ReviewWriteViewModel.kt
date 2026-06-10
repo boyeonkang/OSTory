@@ -50,6 +50,11 @@ class ReviewWriteViewModel(
     val isEditMode: StateFlow<Boolean> = _isEditMode.asStateFlow()
 
     private var editingRecordId: Int = 0
+    private var tempOstList: List<com.example.ostory.domain.model.OstTrack>? = null
+
+    fun setTempOstList(list: List<com.example.ostory.domain.model.OstTrack>?) {
+        tempOstList = list
+    }
 
     fun loadWorkDetail(workId: Int, workType: String) {
         val type = when (workType.uppercase()) {
@@ -142,7 +147,12 @@ class ReviewWriteViewModel(
             comment = commentVal,
             posterPath = currentWork.posterPath,
             titleKo = currentWork.titleKo,
-            titleEn = currentWork.titleEn
+            titleEn = currentWork.titleEn,
+            ostList = if (_isEditMode.value) {
+                ReviewRepository.getInstance().getRecordById(editingRecordId)?.ostList ?: emptyList()
+            } else {
+                tempOstList ?: emptyList()
+            }
         )
         if (_isEditMode.value) {
             ReviewRepository.getInstance().updateRecord(record)
