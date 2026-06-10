@@ -44,6 +44,89 @@ class PreferenceAnalysisViewModel(
             initialValue = if (reviewRepository.getRecords().isEmpty()) 0.0 else reviewRepository.getRecords().map { it.rating }.average()
         )
 
+    val sortedRecords: StateFlow<List<ReviewRecord>> = records
+        .map { list -> list.sortedByDescending { it.watchedDate } }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptyList()
+        )
+
+    val currentMonthCount: StateFlow<Int> = records
+        .map { list ->
+            try {
+                val now = java.time.LocalDate.now()
+                val currentYearMonth = String.format(java.util.Locale.US, "%04d-%02d", now.year, now.monthValue)
+                list.count { it.watchedDate.startsWith(currentYearMonth) }
+            } catch (e: Exception) {
+                0
+            }
+        }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = 0
+        )
+
+    val monthlyCounts: StateFlow<List<Pair<String, Int>>> = records
+        .map { list ->
+            if (list.isEmpty()) return@map emptyList<Pair<String, Int>>()
+            val groups = list.groupBy {
+                try {
+                    val date = java.time.LocalDate.parse(it.watchedDate)
+                    String.format(java.util.Locale.US, "%d.%02d", date.year, date.monthValue)
+                } catch (e: Exception) {
+                    ""
+                }
+            }.filterKeys { it.isNotEmpty() }
+
+            groups.mapValues { it.value.size }
+                .toList()
+                .sortedBy { it.first }
+        }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptyList()
+        )
+
+    val ratingDistribution: StateFlow<Map<Int, Int>> = records
+        .map { list ->
+            val dist = mutableMapOf(1 to 0, 2 to 0, 3 to 0, 4 to 0, 5 to 0)
+            list.forEach {
+                val r = it.rating
+                if (r in 1..5) {
+                    dist[r] = (dist[r] ?: 0) + 1
+                }
+            }
+            dist
+        }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = mapOf(1 to 0, 2 to 0, 3 to 0, 4 to 0, 5 to 0)
+        )
+
+    val dayOfWeekDistribution: StateFlow<Map<java.time.DayOfWeek, Int>> = records
+        .map { list ->
+            val dist = java.time.DayOfWeek.values().associateWith { 0 }.toMutableMap()
+            list.forEach {
+                try {
+                    val date = java.time.LocalDate.parse(it.watchedDate)
+                    val day = date.dayOfWeek
+                    dist[day] = (dist[day] ?: 0) + 1
+                } catch (e: Exception) {
+                    // ignore
+                }
+            }
+            dist
+        }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = java.time.DayOfWeek.values().associateWith { 0 }
+        )
+
     private val _isAnalyzing = MutableStateFlow(false)
     val isAnalyzing: StateFlow<Boolean> = _isAnalyzing.asStateFlow()
 
