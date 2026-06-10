@@ -1,5 +1,7 @@
 package com.example.ostory.data.repository
 
+import android.content.Context
+import com.example.ostory.presentation.preference.PreferenceAnalysisResult
 import com.example.ostory.BuildConfig
 import com.example.ostory.data.remote.gemini.GeminiClient
 import com.example.ostory.data.remote.gemini.GeminiPromptBuilder
@@ -17,6 +19,29 @@ class PreferenceRepository {
     private val apiService = GeminiClient.service
     private val apiKey = BuildConfig.GEMINI_API_KEY
     private val gson = Gson()
+
+    fun saveAnalysisResult(context: Context, result: PreferenceAnalysisResult) {
+        try {
+            val sharedPreferences = context.getSharedPreferences("ostory_preference", Context.MODE_PRIVATE)
+            val json = gson.toJson(result)
+            sharedPreferences.edit().putString("preference_analysis_json", json).apply()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    fun loadAnalysisResult(context: Context): PreferenceAnalysisResult? {
+        try {
+            val sharedPreferences = context.getSharedPreferences("ostory_preference", Context.MODE_PRIVATE)
+            val json = sharedPreferences.getString("preference_analysis_json", null)
+            if (!json.isNullOrBlank()) {
+                return gson.fromJson(json, PreferenceAnalysisResult::class.java)
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+        return null
+    }
 
     suspend fun analyzePreference(
         records: List<ReviewRecord>,
