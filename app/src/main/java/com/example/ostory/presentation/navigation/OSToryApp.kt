@@ -21,7 +21,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.example.ostory.presentation.calendar.CalendarHomeScreen
+import com.example.ostory.presentation.calendar.CalendarScreen
 import com.example.ostory.presentation.detail.WorkDetailScreen
 import com.example.ostory.presentation.preference.PreferenceScreen
 import com.example.ostory.presentation.review.ReviewDetailScreen
@@ -107,7 +107,7 @@ fun OSToryApp() {
                 .padding(innerPadding)
         ) {
             composable(Screen.Calendar.route) {
-                CalendarHomeScreen(
+                CalendarScreen(
                     onNavigateToSearch = { selectedDate ->
                         navController.navigate(Screen.Search.createRoute(selectedDate))
                     },
