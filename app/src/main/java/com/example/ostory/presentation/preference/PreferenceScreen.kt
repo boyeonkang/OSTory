@@ -2,6 +2,7 @@ package com.example.ostory.presentation.preference
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -10,10 +11,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Movie
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -44,6 +45,9 @@ fun PreferenceScreen(
     val monthlyCounts by viewModel.monthlyCounts.collectAsState()
     val ratingDistribution by viewModel.ratingDistribution.collectAsState()
     val dayOfWeekDistribution by viewModel.dayOfWeekDistribution.collectAsState()
+
+    var isExpanded by remember { mutableStateOf(false) }
+    var showAll by remember { mutableStateOf(false) }
 
     Scaffold(
         containerColor = Color.White
@@ -168,14 +172,107 @@ fun PreferenceScreen(
                     DayOfWeekStatisticsCard(dayOfWeekDistribution = dayOfWeekDistribution)
                 }
 
-                // 전체 감상 기록 목록 타이틀
+                // 전체 감상 기록 목록 타이틀 및 접기/펼치기 가능 섹션
                 item {
-                    SectionHeader(title = "전체 감상 기록")
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(containerColor = Color.White),
+                        shape = RoundedCornerShape(16.dp),
+                        border = BorderStroke(1.dp, Color(0xFFEEEEEE))
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable { 
+                                        isExpanded = !isExpanded 
+                                        if (!isExpanded) {
+                                            showAll = false
+                                        }
+                                    },
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = "전체 감상 기록 (${totalCount}개)",
+                                    fontSize = 18.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.Black
+                                )
+                                Icon(
+                                    imageVector = if (isExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                                    contentDescription = if (isExpanded) "접기" else "펼치기",
+                                    tint = Color.Gray,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            }
+
+                            if (!isExpanded) {
+                                Spacer(modifier = Modifier.height(12.dp))
+                                Text(
+                                    text = "감상 기록 전체 보기",
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    color = Color(0xFF9C27B0),
+                                    modifier = Modifier.clickable { isExpanded = true }
+                                )
+                            }
+                        }
+                    }
                 }
 
-                // 전체 감상 기록 목록 아이템들
-                items(sortedRecords) { record ->
-                    ReviewRecordItem(record = record)
+                if (isExpanded) {
+                    val displayRecords = if (showAll) sortedRecords else sortedRecords.take(5)
+                    items(displayRecords) { record ->
+                        ReviewRecordItem(record = record)
+                    }
+
+                    if (sortedRecords.size > 5 && !showAll) {
+                        item {
+                            Button(
+                                onClick = { showAll = true },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(48.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = Color(0xFFF3E5F5),
+                                    contentColor = Color(0xFF9C27B0)
+                                ),
+                                shape = RoundedCornerShape(24.dp)
+                            ) {
+                                Text(
+                                    text = "더 보기 (${sortedRecords.size - 5}개 더 있음)",
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
+                    }
+
+                    if (showAll) {
+                        item {
+                            OutlinedButton(
+                                onClick = { 
+                                    showAll = false
+                                    isExpanded = false
+                                },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(48.dp),
+                                border = BorderStroke(1.dp, Color(0xFFE0E0E0)),
+                                colors = ButtonDefaults.outlinedButtonColors(
+                                    contentColor = Color.Gray
+                                ),
+                                shape = RoundedCornerShape(24.dp)
+                            ) {
+                                Text(
+                                    text = "감상 기록 목록 접기",
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
+                    }
                 }
 
                 // AI 취향 분석 섹션 타이틀
