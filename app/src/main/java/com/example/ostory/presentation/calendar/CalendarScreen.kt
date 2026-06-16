@@ -15,6 +15,7 @@ import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Movie
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.Star
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -162,12 +163,8 @@ fun CalendarScreen(
 
                 val clickableModifier = if (reviewsForDay.isNotEmpty() && !posterUrl.isNullOrEmpty()) {
                     Modifier.clickable {
-                        if (reviewCount == 1) {
-                            onNavigateToReviewDetail(firstReview.id)
-                        } else {
-                            selectedDateReviews = reviewsForDay
-                            showBottomSheet = true
-                        }
+                        selectedDateReviews = reviewsForDay
+                        showBottomSheet = true
                     }
                 } else {
                     Modifier.clickable { onNavigateToSearch(dateString) }
@@ -250,97 +247,147 @@ fun CalendarScreen(
                     .padding(horizontal = 16.dp)
                     .padding(bottom = 24.dp)
             ) {
-                Text(
-                    text = "${selectedDateReviews.firstOrNull()?.watchedDate ?: ""} 감상 기록 목록",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.Black,
-                    modifier = Modifier.padding(bottom = 16.dp)
-                )
-
-                LazyColumn(
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 16.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    items(selectedDateReviews) { record ->
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable {
-                                    showBottomSheet = false
-                                    onNavigateToReviewDetail(record.id)
-                                }
-                                .background(Color(0xFFF9F9F9), RoundedCornerShape(8.dp))
-                                .padding(12.dp),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            if (record.posterPath != null) {
-                                AsyncImage(
-                                    model = record.posterPath,
-                                    contentDescription = record.titleKo,
-                                    modifier = Modifier
-                                        .width(50.dp)
-                                        .height(70.dp)
-                                        .clip(RoundedCornerShape(4.dp)),
-                                    contentScale = ContentScale.Crop
-                                )
-                            } else {
-                                Box(
-                                    modifier = Modifier
-                                        .width(50.dp)
-                                        .height(70.dp)
-                                        .background(Color(0xFFE0E0E0), RoundedCornerShape(4.dp)),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Movie,
-                                        contentDescription = null,
-                                        tint = Color.Gray
-                                    )
-                                }
-                            }
+                    Text(
+                        text = "${selectedDateReviews.firstOrNull()?.watchedDate ?: ""} 감상 기록 목록",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.Black
+                    )
+                    IconButton(
+                        onClick = {
+                            showBottomSheet = false
+                            val dateStr = selectedDateReviews.firstOrNull()?.watchedDate ?: ""
+                            onNavigateToSearch(dateStr)
+                        }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Add,
+                            contentDescription = "작품 추가",
+                            tint = Color(0xFF9C27B0)
+                        )
+                    }
+                }
 
-                            Column(
-                                modifier = Modifier.weight(1f)
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f, fill = false)
+                ) {
+                    LazyColumn(
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        items(selectedDateReviews) { record ->
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable {
+                                        showBottomSheet = false
+                                        onNavigateToReviewDetail(record.id)
+                                    }
+                                    .background(Color(0xFFF9F9F9), RoundedCornerShape(8.dp))
+                                    .padding(12.dp),
+                                horizontalArrangement = Arrangement.spacedBy(12.dp)
                             ) {
-                                Text(
-                                    text = record.titleKo ?: "",
-                                    fontSize = 16.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color.Black,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
-                                )
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    for (i in 1..5) {
-                                        val isSelected = i <= record.rating
+                                if (record.posterPath != null) {
+                                    AsyncImage(
+                                        model = record.posterPath,
+                                        contentDescription = record.titleKo,
+                                        modifier = Modifier
+                                            .width(50.dp)
+                                            .height(70.dp)
+                                            .clip(RoundedCornerShape(4.dp)),
+                                        contentScale = ContentScale.Crop
+                                    )
+                                } else {
+                                    Box(
+                                        modifier = Modifier
+                                            .width(50.dp)
+                                            .height(70.dp)
+                                            .background(Color(0xFFE0E0E0), RoundedCornerShape(4.dp)),
+                                        contentAlignment = Alignment.Center
+                                    ) {
                                         Icon(
-                                            imageVector = if (isSelected) Icons.Filled.Star else Icons.Outlined.Star,
+                                            imageVector = Icons.Default.Movie,
                                             contentDescription = null,
-                                            tint = if (isSelected) Color(0xFFFFC107) else Color(0xFFD1D1D6),
-                                            modifier = Modifier.size(14.dp)
+                                            tint = Color.Gray
                                         )
                                     }
-                                    Spacer(modifier = Modifier.width(4.dp))
+                                }
+
+                                Column(
+                                    modifier = Modifier.weight(1f)
+                                ) {
                                     Text(
-                                        text = "${record.rating}점",
-                                        fontSize = 12.sp,
-                                        color = Color.Gray
+                                        text = record.titleKo ?: "",
+                                        fontSize = 16.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color.Black,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        for (i in 1..5) {
+                                            val isSelected = i <= record.rating
+                                            Icon(
+                                                imageVector = if (isSelected) Icons.Filled.Star else Icons.Outlined.Star,
+                                                contentDescription = null,
+                                                tint = if (isSelected) Color(0xFFFFC107) else Color(0xFFD1D1D6),
+                                                modifier = Modifier.size(14.dp)
+                                            )
+                                        }
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        Text(
+                                            text = "${record.rating}점",
+                                            fontSize = 12.sp,
+                                            color = Color.Gray
+                                        )
+                                    }
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Text(
+                                        text = record.comment.ifBlank { "작성된 한줄평이 없습니다." },
+                                        fontSize = 13.sp,
+                                        color = Color.DarkGray,
+                                        maxLines = 2,
+                                        overflow = TextOverflow.Ellipsis
                                     )
                                 }
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Text(
-                                    text = record.comment.ifBlank { "작성된 한줄평이 없습니다." },
-                                    fontSize = 13.sp,
-                                    color = Color.DarkGray,
-                                    maxLines = 2,
-                                    overflow = TextOverflow.Ellipsis
-                                )
                             }
                         }
                     }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Button(
+                    onClick = {
+                        showBottomSheet = false
+                        val dateStr = selectedDateReviews.firstOrNull()?.watchedDate ?: ""
+                        onNavigateToSearch(dateStr)
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF9C27B0)
+                    ),
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Text(
+                        text = "이 날짜에 작품 추가",
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 15.sp
+                    )
                 }
             }
         }
